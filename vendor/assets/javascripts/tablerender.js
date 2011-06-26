@@ -68,7 +68,10 @@
       empties: false,
       
       // int:       indicates how many rows to render before and after paging
-      threshold: 15
+      threshold: 15,
+      
+      // Function:  used to render entire row
+      rowTemplate: null
     }, opts),
 
     self = this,
@@ -1114,17 +1117,23 @@
 
         var
           datum = _currentData[index],
-          style = 'height:' + options.rowHeight + 'px;position:absolute;top:' + (index * (options.rowHeight + options.borderHeight)) + 'px;left:0;right:0;',
+          style = 'height:' + options.rowHeight + 'px;position:absolute;top:' + (index * (options.rowHeight + options.borderHeight)) + 'px;left:0;right:0;';
+          row = null
+        if ( options.rowTemplate ) {
+          row = options.rowTemplate(index, datum);
+        } else {
           row = $(options.rowRender(index, datum, style, options.rowHeight, options.rowCss))[0];
-        if (row) {
+        }
+        
+        if (row && !options.rowTemplate) {
           for (var c = 0, l = options.columns.length; c < l; c++) {
             var column = options.columns[c];
             // call column render function
             var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
             col && row.appendChild(col); // faster than jQuery functions
           }
-          $(row).addClass('row');
         }
+        if ( row ) $(row).addClass('row')
         return row;
       }
 
