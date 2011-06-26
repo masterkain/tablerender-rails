@@ -1,4 +1,5 @@
 require 'rails'
+require "tablerender-rails/version"
 
 module Tablerender
   module Rails
