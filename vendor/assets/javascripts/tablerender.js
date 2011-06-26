@@ -154,6 +154,16 @@
        * PUBLIC METHODS
        */ 
       
+      
+      this.option = function(name, value) {
+        if ( value == undefined || value == null ) {
+          return options[name];
+        } else {
+          options[name] = value
+        }
+      }
+      
+      
       /**
        * Use this method to set new collection data.
        * If not arguments passed, this method returns the entire collection data
