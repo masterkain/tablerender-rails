@@ -1,6 +1,6 @@
 require 'rails/generators'
 
-module Backbone
+module Tablerender
   class Install < ::Rails::Generators::Base
     JAVASCRIPTS = File.expand_path('../../../vendor/assets/javascripts', __FILE__)
 
@@ -8,7 +8,7 @@ module Backbone
       @source_root ||= JAVASCRIPTS
     end
 
-    def copy_backbone
+    def copy_tablerender
       Dir[File.join(JAVASCRIPTS, '*.js')].each do |file|
         file = File.split(file).last
         copy_file file, "public/javascripts/#{file}"
