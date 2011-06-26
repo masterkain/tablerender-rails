@@ -1216,7 +1216,9 @@
   };
   
   if ( ! $.introSort ) {
-    throw "No $.introSort function found"
+    if (console) {
+      console.error( "No $.introSort function found" );
+    }
   }
 
 })(jQuery);
