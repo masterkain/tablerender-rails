@@ -66,3 +66,5 @@ Example
   }
   
   $('#example').table().data( jsonData );
+
+
