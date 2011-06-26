@@ -1032,6 +1032,8 @@
 
         body[0].innerHTML = '';
 
+        body.addClass('loading');
+
         self.resize();
 
         resetViewPorts();
@@ -1041,6 +1043,7 @@
           _showData();
           _waiting = false;
         //}, 1000);
+        body.removeClass('loading');
       }
 
       /**
