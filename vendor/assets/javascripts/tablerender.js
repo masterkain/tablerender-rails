@@ -1228,9 +1228,10 @@
     });
   };
   
+  
   if ( ! $.introSort ) {
     if (console) {
-      console.error( "No $.introSort function found" );
+      console.warn( "No $.introSort function found" );
     }
   }
 
