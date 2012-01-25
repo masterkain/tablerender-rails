@@ -183,9 +183,11 @@
           }
 
           // store column object into collection
-          options.sortable && $(c).bind('click', function(e) {
-            self.sort(i, true); // bind the sortable event
-          });
+          if ( options.sortable ){
+            $(c).bind('click', function(e) {
+              self.sort(i, true); // bind the sortable event
+            });
+          }
 
 
           if ( _header_drawn ){
@@ -264,7 +266,7 @@
 
         });
 
-        return _header_drawn = true;
+        return (_header_drawn = true);
       };
 
 
@@ -407,13 +409,13 @@
         if (!options.selection) return;
 
         var
-        row = self.rowAt(index);
-        currentIndex = originalIndexToCurrentIndex(index);
+          row = this.rowAt(index);
+          currentIndex = originalIndexToCurrentIndex(index);
 
         unselectRow(currentIndex);
 
         if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
-            row = this.rowAt(index);
+            // row = this.rowAt(index);
             $self.trigger('rowSelection', [index, row, false, _currentData[currentIndex]]);
         }
 
@@ -942,12 +944,16 @@
         for (var i = 0, l = data.length; i < l; i++) {
           var found = false;
           for (var c = 0, lc = options.columns.length; c < lc; c++) {
-            attachIndex && (data[i]._original_index = i); // store original index
+            if (attachIndex){
+              data[i]._original_index = i; // store original index
+            }
             var str = data[i][options.columns[c].key];
             if (("" + str).toLowerCase().indexOf(query) != -1) {
               result.indexes.push(i);
               var currentIndex = result.data.push(data[i]);
-              attachIndex && (data[i]._current_index = (currentIndex - 1));
+              if ( attachIndex ){
+                data[i]._current_index = (currentIndex - 1);
+              }
               found = true;
               break;
             }
@@ -1176,7 +1182,7 @@
        */
       function newViewPort() {
         _oldViewPort = _viewPort;
-        return _viewPort = getViewPort();
+        return (_viewPort = getViewPort());
       }
 
       /**
@@ -1205,7 +1211,9 @@
        * Manages the scroll event
        */
       function _scroll(e) {
-        _scrollTimer && clearTimeout(_scrollTimer);
+        if ( _scrollTimer ){
+          clearTimeout(_scrollTimer);
+        }
         _scrollTimer = setTimeout(function() {
           if (_waiting) return;
           var scrollTop = body_container[0].scrollTop;
