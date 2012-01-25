@@ -59,7 +59,7 @@
       empties: true,
 
       // int:       indicates how many rows to render before and after paging
-      threshold: 15,
+      threshold: 15
 
     }, opts),
 
@@ -145,10 +145,10 @@
 
 
       this.option = function(name, value) {
-        if ( value == undefined || value == null ) {
+        if ( value === undefined || value === null ) {
           return options[name];
         } else {
-          options[name] = value
+          options[name] = value;
         }
       };
 
@@ -170,7 +170,7 @@
 
           if (
               (index >= _columns.length) ||
-              ( _columns[ index ] == undefined ||  _columns[ index ] == null )
+              ( _columns[ index ] === undefined ||  _columns[ index ] === null )
 
             ){
               // We are adding a column in an empty position.
@@ -259,7 +259,7 @@
             } else {
               element.removeClass('column_hidden');
             }
-            $(element).appendTo( head )
+            $(element).appendTo( head );
           }
 
         });
@@ -317,7 +317,7 @@
        */
       this.currentDataAt = function(index) {
         return _currentData[index];
-      }
+      };
 
       /**
        * Resizes the table
@@ -353,7 +353,7 @@
        */
       this.dataAt = function(index) {
           return _data[index];
-      }
+      };
 
 
       /**
@@ -413,7 +413,7 @@
         unselectRow(currentIndex);
 
         if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
-            var row = this.rowAt(index);
+            row = this.rowAt(index);
             $self.trigger('rowSelection', [index, row, false, _currentData[currentIndex]]);
         }
 
@@ -583,7 +583,7 @@
        * Returns new data collection length
        */
       this.search = function(text) {
-        if (text == undefined || text == null) text = '';
+        if (text === undefined || text === null) text = '';
         text = $.trim("" + text);
         _queryText = text;
 
@@ -608,7 +608,7 @@
        * Converts given index into current index shown
        */
       this.originalIndexToCurrentIndex = function(index) {
-        return originalIndexToCurrentIndex(index)
+        return originalIndexToCurrentIndex(index);
       };
 
       /**
@@ -760,8 +760,7 @@
        * Replaces single row at the specified position with new given row data
        */
       this.replaceRow = function(position, row) {
-        return
-          this.replaceRows.apply(this, [
+        return this.replaceRows.apply(this, [
             [position, row]
           ]);
       };
@@ -773,7 +772,7 @@
       this.replaceRows = function(/* [position, row] ... */) {
 
         var args = Array.prototype.slice.call(arguments, 0),
-        redraw = false
+        redraw = false;
         viewPort = getViewPort();
 
         for (var i_arg = 0, l_arg = args.length; i_arg < l_arg; i_arg++) {
@@ -822,7 +821,7 @@
         }
 
         return this;
-      }
+      };
 
 
 
@@ -919,7 +918,7 @@
 
         $self.trigger(  ((show ? 'show' : 'hide') + '_column'), [_columns[ col_index ], col_index]);
         return true;
-      };
+      }
 
 
       /*****************
@@ -1039,7 +1038,7 @@
        * Adds the specified row index to selected row indexes collection
        */
       function selectRow(index) {
-        if (index == undefined || index < 0 || index >= _currentData.length) return;
+        if (index === undefined || index < 0 || index >= _currentData.length) return;
         selectedIndexes().push(index);
       }
 
@@ -1047,7 +1046,7 @@
        * Remove the specified row index from selected row indexes collection
        */
       function unselectRow(index) {
-        if (index == undefined || index < 0 || index >= _currentData.length) return;
+        if (index === undefined || index < 0 || index >= _currentData.length) return;
 
         var pos = $.inArray(index, selectedIndexes());
         if (pos == -1) return;
@@ -1088,7 +1087,7 @@
           else return undefined;
         })();
 
-        if (currentIndex == undefined) return;
+        if (currentIndex === undefined) return;
 
         /** Replace current selected indexes */
         var indexes = unique(selectedIndexes()).sort(function(a, b) {
@@ -1129,7 +1128,7 @@
        * Returns true if shown data is filtered
        */
       function isFiltered() {
-        return (_queryText != undefined && _queryText.length);
+        return (_queryText !== undefined && _queryText.length);
       }
 
       /**

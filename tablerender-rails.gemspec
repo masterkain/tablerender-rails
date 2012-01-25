@@ -14,4 +14,9 @@ Gem::Specification.new do |gem|
   gem.name          = "tablerender-rails"
   gem.require_paths = ['lib']
   gem.version       = Tablerender::Rails::VERSION
+
+  gem.add_dependency "railties", "~> 3.0"
+
+  gem.add_development_dependency "bundler", ">= 1.0.0"
+  gem.add_development_dependency "rails",   "~> 3.0"
 end

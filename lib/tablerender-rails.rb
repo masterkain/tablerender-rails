@@ -1,4 +1,4 @@
-require 'rails'
+require "rails"
 require "tablerender-rails/version"
 
 module Tablerender
