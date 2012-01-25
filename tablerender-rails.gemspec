@@ -4,9 +4,9 @@ require File.expand_path('../lib/tablerender-rails/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Fabio Tunno", "Claudio Poli"]
   gem.email         = ["fabio@audiobox.fm"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ''
+  gem.description   = 'Adds tablerender.js to the asset pipeline.'
+  gem.summary       = 'JavaScript Table Rendered for Rails 3.1+'
+  gem.homepage      = 'https://github.com/masterkain/tablerender-rails'
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.files         = `git ls-files`.split("\n")
