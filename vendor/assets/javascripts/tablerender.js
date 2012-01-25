@@ -1,12 +1,13 @@
-;(function($) {
+;
+(function ($) {
   var VERSION = "version 0.2b";
   /**
- * Initialization function
- *
- * @param obj the HTML element to wrap
- * @param opts the initial options
- * @return TableRender instance
- */
+   * Initialization function
+   *
+   * @param obj the HTML element to wrap
+   * @param opts the initial options
+   * @return TableRender instance
+   */
   function TableRender(obj, opts) {
 
     this.version = VERSION;
@@ -63,14 +64,13 @@
 
     }, opts),
 
-    // shortcut to 'this' instance
-    self = this,
+      // shortcut to 'this' instance
+      self = this,
 
-    $self = $(self); // shortcut to jQuery functions
-
+      $self = $(self); // shortcut to jQuery functions
     var
-      // Table header wrapper that contains all columns and scrollbar placeholder
-      header_container = $('<div class="table_header_container" style="position:absolute;top:0;left:0;right:0;height:' + options.headHeight + 'px;"></div>').appendTo(obj),
+    // Table header wrapper that contains all columns and scrollbar placeholder
+    header_container = $('<div class="table_header_container" style="position:absolute;top:0;left:0;right:0;height:' + options.headHeight + 'px;"></div>').appendTo(obj),
       // Table header that contains all columns
       head = $('<div class="table_head ' + options.headCss + '"></div>').appendTo(header_container),
       // Table body wrapper that contains the table rows container
@@ -82,8 +82,8 @@
 
 
     var
-      // True once header has been drawed
-      _header_drawn = false,
+    // True once header has been drawed
+    _header_drawn = false,
 
       _waiting = false,
 
@@ -113,126 +113,80 @@
 
       // Current coordinates about viewport currenlty shown
       _oldViewPort = {
-          from: 0,
-          to: 0,
-          height: 0
+        from: 0,
+        to: 0,
+        height: 0
       },
 
       // Coordinates about new viewport to show
       _viewPort = {
-          from: 0,
-          to: 0,
-          height: 0
+        from: 0,
+        to: 0,
+        height: 0
       },
       // Collection of coloumns
       _columns = []; // HTML columns object collection
+    $(options.columns).each(function (i, col) {
+      // add column
+      self.addColumn(col, i);
+    });
+
+    if (options.selection) {
+      // bind the selection event
+      body.delegate('div.row', 'click', rowSelection);
+    }
 
 
-      $(options.columns).each(function(i, col) {
-        // add column
-        self.addColumn(col, i);
-      });
+    /**
+     * PUBLIC METHODS
+     */
 
-      if (options.selection) {
-        // bind the selection event
-        body.delegate('div.row', 'click', rowSelection);
+
+    this.option = function (name, value) {
+      if (value === undefined || value === null) {
+        return options[name];
+      } else {
+        options[name] = value;
       }
+    };
 
 
-      /**
-       * PUBLIC METHODS
-       */
+    /**
+     * Adds column at the specified index
+     *
+     * @param columnData is an Object containing the column data
+     * @param index is an integer used as index of the column
+     */
+    this.addColumn = function (columnData, index) {
+      index = typeof index == 'number' ? index : _columns.length;
 
+      var c = $(options.headRender(index, columnData))[0];
 
-      this.option = function(name, value) {
-        if ( value === undefined || value === null ) {
-          return options[name];
+      if (c) {
+        $(c).css('float', 'left');
+        columnData._html_ = c;
+
+        if ((index >= _columns.length) || (_columns[index] === undefined || _columns[index] === null)
+
+        ) {
+          // We are adding a column in an empty position.
+          // So, we have to replace the existing undefined object with the new column data
+          _columns[index] = columnData;
+
         } else {
-          options[name] = value;
-        }
-      };
-
-
-      /**
-       * Adds column at the specified index
-       *
-       * @param columnData is an Object containing the column data
-       * @param index is an integer used as index of the column
-       */
-      this.addColumn = function(columnData, index){
-        index = typeof index == 'number' ? index : _columns.length;
-
-        var c = $(options.headRender(index, columnData))[0];
-
-        if (c) {
-          $(c).css('float', 'left');
-          columnData._html_ = c;
-
-          if (
-              (index >= _columns.length) ||
-              ( _columns[ index ] === undefined ||  _columns[ index ] === null )
-
-            ){
-              // We are adding a column in an empty position.
-              // So, we have to replace the existing undefined object with the new column data
-            _columns[ index ] = columnData;
-
-          } else {
-            // Add a column into an already non-empty position.
-            _columns.splice( index, 0, columnData);
-          }
-
-          // store column object into collection
-          if ( options.sortable ){
-            $(c).bind('click', function(e) {
-              self.sort(i, true); // bind the sortable event
-            });
-          }
-
-
-          if ( _header_drawn ){
-            // Redraw header
-            this.drawHeader();
-          }
-
-          // TODO: do we have to redraw the body of the table?
-          _showData(true);
-
-          $self.trigger('add_column', [columnData, index]);
-
-        }
-      };
-
-
-      /**
-       * Removes column at the specified index or key
-       * @param index is an  Integer or a 'key' of the column is being to be removed
-       */
-      this.removeColumn = function(index){
-
-        if ( typeof index != 'number' && typeof index != 'string' ){
-          return false;
+          // Add a column into an already non-empty position.
+          _columns.splice(index, 0, columnData);
         }
 
-        var col_index = -1;
-        if ( typeof index == 'number'){
-          if ( _columns[ index ] ){
-            col_index = index;
-          }
-        } else {
-
-          col_index = getColumnIndexByKey( index );
-
-        }
-
-        if ( col_index == -1 ){
-          return false;
+        // store column object into collection
+        if (options.sortable) {
+          $(c).bind('click', function (e) {
+            self.sort(i, true); // bind the sortable event
+          });
         }
 
 
-        var col_data = _columns.splice( col_index, 1 );
-
-        if ( _header_drawn ){
+        if (_header_drawn) {
           // Redraw header
           this.drawHeader();
         }
@@ -240,1025 +194,1063 @@
         // TODO: do we have to redraw the body of the table?
         _showData(true);
 
-        $self.trigger('remove_column', [col_data, col_index]);
+        $self.trigger('add_column', [columnData, index]);
 
-        return col_data;
-
-      };
-
+      }
+    };
 
 
-      this.drawHeader = function(){
-        // Clear the header (remove all columns)
-        head.html('');
+    /**
+     * Removes column at the specified index or key
+     * @param index is an  Integer or a 'key' of the column is being to be removed
+     */
+    this.removeColumn = function (index) {
 
-        $.each(_columns, function(i, item){
+      if (typeof index != 'number' && typeof index != 'string') {
+        return false;
+      }
 
-          var element = $(item._html_);
-          if ( element.length ){
-            if ( item.hidden ){
-              element.addClass('column_hidden');
-            } else {
-              element.removeClass('column_hidden');
-            }
-            $(element).appendTo( head );
+      var col_index = -1;
+      if (typeof index == 'number') {
+        if (_columns[index]) {
+          col_index = index;
+        }
+      } else {
+
+        col_index = getColumnIndexByKey(index);
+
+      }
+
+      if (col_index == -1) {
+        return false;
+      }
+
+
+      var col_data = _columns.splice(col_index, 1);
+
+      if (_header_drawn) {
+        // Redraw header
+        this.drawHeader();
+      }
+
+      // TODO: do we have to redraw the body of the table?
+      _showData(true);
+
+      $self.trigger('remove_column', [col_data, col_index]);
+
+      return col_data;
+
+    };
+
+
+
+    this.drawHeader = function () {
+      // Clear the header (remove all columns)
+      head.html('');
+
+      $.each(_columns, function (i, item) {
+
+        var element = $(item._html_);
+        if (element.length) {
+          if (item.hidden) {
+            element.addClass('column_hidden');
+          } else {
+            element.removeClass('column_hidden');
           }
-
-        });
-
-        return (_header_drawn = true);
-      };
-
-
-      /**
-       * Shows a columns at the specified index
-       */
-      this.showColumn = function(index){
-        showHideColumn(index, true);
-      };
-
-      /**
-       * Hides a columns at the specified index
-       */
-      this.hideColumn = function(index){
-        showHideColumn(index, false);
-      };
-
-
-      this.columns = function(columns){
-        return $.map(_columns.slice(0), function(col, index){
-          if ( col ){
-            return col;
-          }
-        });
-      };
-
-
-
-      /**
-       * Use this method to set new collection data.
-       * If not arguments passed, this method returns the entire collection data
-       */
-      this.data = function(data) {
-        if (data === undefined) return _data;
-
-        this.clearSelection();
-        _data = _currentData = [];
-
-        _queryText = undefined;
-
-        _data = _currentData = data;
-
-        showData(data);
-
-        $self.trigger('newData', [data]);
-      };
-
-      /**
-       * Returns the row data at the specified position
-       */
-      this.currentDataAt = function(index) {
-        return _currentData[index];
-      };
-
-      /**
-       * Resizes the table
-       */
-      this.resize = function() {
-        var _height = _currentData.length * (options.rowHeight + options.borderHeight); // calculate maximum height
-        body.css('height', _height); // set height to body
-        newViewPort();
-
-        head.width(body.width()); // Set the table header width including scrollbar width fix
-        $self.trigger('layout'); // fire event
-      };
-
-      /**
-       * Returns the HTML object representing the row at the specified position
-       */
-      this.rowAt = function(index) {
-        index = originalIndexToCurrentIndex(index);
-
-        var _row = _shownData[index];
-        if ( _row ){
-          $(_row).css({
-            'top': (index * (options.rowHeight + options.borderHeight)),
-            'height': options.rowHeight
-          });
+          $(element).appendTo(head);
         }
 
-        return _row;
-      };
+      });
 
-      /**
-       * Returns the data row object at the specified position
-       */
-      this.dataAt = function(index) {
-          return _data[index];
-      };
+      return (_header_drawn = true);
+    };
 
 
-      /**
-       * Returns the data row object associated with given row.
-       * Row is the HTML object
-       */
-      this.rowToData = function(row) {
-        var index = this.rowToIndex(row);
-        return _data[index];
-      };
+    /**
+     * Shows a columns at the specified index
+     */
+    this.showColumn = function (index) {
+      showHideColumn(index, true);
+    };
 
-      /**
-       * Returns the index associated with given row.
-       * Row is the HTML object
-       */
-      this.rowToIndex = function(row) {
-        var index = $(row)[0].offsetTop / (options.rowHeight + options.borderHeight);
-        return currentIndexToOriginalIndex(index);
-      };
-
-      /***************
-       *  SELECTION
-       ***************/
+    /**
+     * Hides a columns at the specified index
+     */
+    this.hideColumn = function (index) {
+      showHideColumn(index, false);
+    };
 
 
-      /**
-       * Marks the row at the specified index as selected
-       */
-      this.selectRow = function(index) {
+    this.columns = function (columns) {
+      return $.map(_columns.slice(0), function (col, index) {
+        if (col) {
+          return col;
+        }
+      });
+    };
 
-        if (!options.selection) return;
-        if (!options.multiselection) this.clearSelection();
 
-        var
-        currentIndex = originalIndexToCurrentIndex(index),
+
+    /**
+     * Use this method to set new collection data.
+     * If not arguments passed, this method returns the entire collection data
+     */
+    this.data = function (data) {
+      if (data === undefined) return _data;
+
+      this.clearSelection();
+      _data = _currentData = [];
+
+      _queryText = undefined;
+
+      _data = _currentData = data;
+
+      showData(data);
+
+      $self.trigger('newData', [data]);
+    };
+
+    /**
+     * Returns the row data at the specified position
+     */
+    this.currentDataAt = function (index) {
+      return _currentData[index];
+    };
+
+    /**
+     * Resizes the table
+     */
+    this.resize = function () {
+      var _height = _currentData.length * (options.rowHeight + options.borderHeight); // calculate maximum height
+      body.css('height', _height); // set height to body
+      newViewPort();
+
+      head.width(body.width()); // Set the table header width including scrollbar width fix
+      $self.trigger('layout'); // fire event
+    };
+
+    /**
+     * Returns the HTML object representing the row at the specified position
+     */
+    this.rowAt = function (index) {
+      index = originalIndexToCurrentIndex(index);
+
+      var _row = _shownData[index];
+      if (_row) {
+        $(_row).css({
+          'top': (index * (options.rowHeight + options.borderHeight)),
+          'height': options.rowHeight
+        });
+      }
+
+      return _row;
+    };
+
+    /**
+     * Returns the data row object at the specified position
+     */
+    this.dataAt = function (index) {
+      return _data[index];
+    };
+
+
+    /**
+     * Returns the data row object associated with given row.
+     * Row is the HTML object
+     */
+    this.rowToData = function (row) {
+      var index = this.rowToIndex(row);
+      return _data[index];
+    };
+
+    /**
+     * Returns the index associated with given row.
+     * Row is the HTML object
+     */
+    this.rowToIndex = function (row) {
+      var index = $(row)[0].offsetTop / (options.rowHeight + options.borderHeight);
+      return currentIndexToOriginalIndex(index);
+    };
+
+    /***************
+     *  SELECTION
+     ***************/
+
+
+    /**
+     * Marks the row at the specified index as selected
+     */
+    this.selectRow = function (index) {
+
+      if (!options.selection) return;
+      if (!options.multiselection) this.clearSelection();
+
+      var
+      currentIndex = originalIndexToCurrentIndex(index),
         viewPort = getViewPort();
 
-        selectRow(currentIndex);
-        if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
-            var row = this.rowAt(index);
-            $self.trigger('rowSelection', [index, row, true, _currentData[currentIndex]]);
-        }
-        return this;
-      };
+      selectRow(currentIndex);
+      if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
+        var row = this.rowAt(index);
+        $self.trigger('rowSelection', [index, row, true, _currentData[currentIndex]]);
+      }
+      return this;
+    };
 
 
-      /**
-       * Marks the row at the specified index as unselected
-       */
-      this.unselectRow = function(index) {
-        if (!options.selection) return;
+    /**
+     * Marks the row at the specified index as unselected
+     */
+    this.unselectRow = function (index) {
+      if (!options.selection) return;
 
-        var
-          row = this.rowAt(index);
-          currentIndex = originalIndexToCurrentIndex(index);
+      var
+      row = this.rowAt(index);
+      currentIndex = originalIndexToCurrentIndex(index);
 
-        unselectRow(currentIndex);
+      unselectRow(currentIndex);
 
-        if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
-            // row = this.rowAt(index);
-            $self.trigger('rowSelection', [index, row, false, _currentData[currentIndex]]);
-        }
+      if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
+        // row = this.rowAt(index);
+        $self.trigger('rowSelection', [index, row, false, _currentData[currentIndex]]);
+      }
 
-        return this;
-      };
+      return this;
+    };
 
-      /**
-       * Marks all row as unselected
-       */
-      this.clearSelection = function() {
-        var indexes = selectedIndexes(),
+    /**
+     * Marks all row as unselected
+     */
+    this.clearSelection = function () {
+      var indexes = selectedIndexes(),
         viewPort = getViewPort();
-        _selectedIndexes = [];
-        for (var i = indexes.length - 1; i >= 0; i--) {
-          var index = indexes[i];
-          if (index >= viewPort.from && index <= viewPort.to) {
-            unselectRow(indexes[i]);
-            var row = this.rowAt(index);
-            $self.trigger('rowSelection', [index, row, false, _currentData[index]]);
-          }
+      _selectedIndexes = [];
+      for (var i = indexes.length - 1; i >= 0; i--) {
+        var index = indexes[i];
+        if (index >= viewPort.from && index <= viewPort.to) {
+          unselectRow(indexes[i]);
+          var row = this.rowAt(index);
+          $self.trigger('rowSelection', [index, row, false, _currentData[index]]);
         }
-      };
+      }
+    };
 
-      /**
-       * Returns all selected row indexes
-       */
-      this.selectedIndexes = function() {
-        var indexes = _selectedIndexes,
+    /**
+     * Returns all selected row indexes
+     */
+    this.selectedIndexes = function () {
+      var indexes = _selectedIndexes,
         result = [];
-        for (var i = 0, l = indexes.length; i < l; i++)
-        result.push(currentIndexToOriginalIndex(indexes[i]));
-        return result;
-      };
+      for (var i = 0, l = indexes.length; i < l; i++)
+      result.push(currentIndexToOriginalIndex(indexes[i]));
+      return result;
+    };
 
 
-      /**
-       * Returns all selected row data
-       */
-      this.selectedData = function() {
-        var indexes = this.selectedIndexes(),
+    /**
+     * Returns all selected row data
+     */
+    this.selectedData = function () {
+      var indexes = this.selectedIndexes(),
         result = [];
-        for (var i = 0, l = indexes.length; i < l; i++)
-        result.push(_data[indexes[i]]);
-        return result;
-      };
+      for (var i = 0, l = indexes.length; i < l; i++)
+      result.push(_data[indexes[i]]);
+      return result;
+    };
 
 
-      /**
-       * Returns the last selcted row index
-       */
-      this.lastSelectedIndex = function() {
-        return this.selectedIndexes()[_selectedIndexes.length - 1];
-      };
+    /**
+     * Returns the last selcted row index
+     */
+    this.lastSelectedIndex = function () {
+      return this.selectedIndexes()[_selectedIndexes.length - 1];
+    };
 
-      /**
-       * Returns the last selected row data
-       */
-      this.lastSelectedData = function() {
-        return _data[this.lastSelectedIndex()];
-      };
+    /**
+     * Returns the last selected row data
+     */
+    this.lastSelectedData = function () {
+      return _data[this.lastSelectedIndex()];
+    };
 
 
-      /**
-       * Scrolls to row at the specified index
-       */
-      this.goTo = function(index) {
+    /**
+     * Scrolls to row at the specified index
+     */
+    this.goTo = function (index) {
 
-        index = originalIndexToCurrentIndex(index);
-        var
-          // calculate row position
-          pos = (index * (options.rowHeight + options.borderHeight)),
-          // current scroll position
-          scrollTop = body_container[0].scrollTop,
-          _height = body_container[0].offsetHeight,
-          viewPort = getViewPort();
+      index = originalIndexToCurrentIndex(index);
+      var
+      // calculate row position
+      pos = (index * (options.rowHeight + options.borderHeight)),
+        // current scroll position
+        scrollTop = body_container[0].scrollTop,
+        _height = body_container[0].offsetHeight,
+        viewPort = getViewPort();
 
-        if ((pos >= scrollTop) && ((pos + options.rowHeight) <= (scrollTop + _height))) {
-          // track already shown
+      if ((pos >= scrollTop) && ((pos + options.rowHeight) <= (scrollTop + _height))) {
+        // track already shown
+      } else {
+        if ((pos + options.rowHeight) > (scrollTop + _height)) {
+          // row is positioned downside current viewport
+          scrollTop = scrollTop + ((pos + options.rowHeight) - (scrollTop + _height));
         } else {
-          if ((pos + options.rowHeight) > (scrollTop + _height)) {
-            // row is positioned downside current viewport
-            scrollTop = scrollTop + ((pos + options.rowHeight) - (scrollTop + _height));
-          } else {
-            // row is positioned upside current viewport
-            scrollTop = pos;
-          }
+          // row is positioned upside current viewport
+          scrollTop = pos;
         }
-        // set new scrollTop position
-        body_container[0].scrollTop = parseInt(scrollTop, 10);
+      }
+      // set new scrollTop position
+      body_container[0].scrollTop = parseInt(scrollTop, 10);
 
-        var row = null;
-        if (index >= viewPort.from && index <= viewPort.to)
-          row = this.rowAt(index);
+      var row = null;
+      if (index >= viewPort.from && index <= viewPort.to) row = this.rowAt(index);
 
-        $self.trigger('scrollTo', [index, row]); // fire event
-        return row; // return row
-      };
+      $self.trigger('scrollTo', [index, row]); // fire event
+      return row; // return row
+    };
 
-      /**************
-       *  SORTABLE
-       **************/
+    /**************
+     *  SORTABLE
+     **************/
 
-      /**
-       * Sorts table by specified column
-       * @param col integer value representing the column index
-       * @param ignoreCase if true compares objects by case-insensitive mode
+    /**
+     * Sorts table by specified column
+     * @param col integer value representing the column index
+     * @param ignoreCase if true compares objects by case-insensitive mode
+     */
+    this.sort = function (col, ignoreCase) {
+      var column = options.columns[col]; // get column data
+      if (options.canBeSorted(column) === false) return this;
+
+      var asc = true;
+      if (_asc[0] == col) {
+        asc = !_asc[1]; // get ascendent/descendent flag
+      } //else {
+      _currentData = $.introSort(_currentData, function (aRow, bRow) {
+        var aDatum = aRow[column.key],
+          bDatum = bRow[column.key];
+        if (ignoreCase && (typeof aDatum == 'string')) {
+          // transform into lower case if ignoreCase flag is true
+          aDatum = aDatum.toLowerCase();
+          bDatum = bDatum.toLowerCase();
+        }
+        if (options.sort[column.key] && options.sort[column.key].apply) {
+          return options.sort[column.key](aRow, bRow, asc);
+        } else {
+          return asc ? (aDatum < bDatum) : (aDatum > bDatum);
+        }
+      }, function (datum1, index1, datum2, index2) {
+        datum1._current_index = index1;
+        datum2._current_index = index2;
+      });
+
+      // empties older selected rows
+      _selectedIndexes = [];
+
+      _asc = [col, asc];
+      $self.trigger('columnSort', [col, column, _columns[col], asc, _columns]); // fire event
+      var viewPort = getViewPort();
+      newViewPort();
+      removeOlderRows(viewPort.from, viewPort.to);
+      _showData(true);
+
+      return this;
+    };
+
+    /*****************
+     *   FILTERING
+     *****************/
+
+    /**
+     * Returns new filtered data objects
+     */
+    this.dataFilter = function (query) {
+      return filter(query, _data).data;
+    };
+
+    /**
+     * Returns new filtered data indexes
+     */
+    this.indexesFilter = function (query) {
+      return filter(query, _data).indexes;
+    };
+
+    /**
+     * Searches given text in the collection
+     * Returns new data collection length
+     */
+    this.search = function (text) {
+      if (text === undefined || text === null) text = '';
+      text = $.trim("" + text);
+      _queryText = text;
+
+      if (!text) {
+        return this.data(this.data());
+      }
+
+      this.clearSelection();
+
+      var result = filter(text, _data, true);
+
+      showData(result.data);
+
+      return result.data.length;
+    };
+
+    /*******************
+     *    UTILITY
+     *******************/
+
+    /**
+     * Converts given index into current index shown
+     */
+    this.originalIndexToCurrentIndex = function (index) {
+      return originalIndexToCurrentIndex(index);
+    };
+
+    /**
+     * Returns given index into global index
+     */
+    this.currentIndexToOriginalIndex = function (index) {
+      return currentIndexToOriginalIndex(index);
+    };
+
+    /********************
+     *   MANIPULATION
+     *******************/
+
+    /**
+     * Adds single row to collection at the specified position
+     */
+    this.addRow = function (position, row) {
+      return this.addRows.apply(this, arguments);
+    };
+
+    /**
+     * Adds more than one row to colelction at the specified position
+     * @param position integer representing the position which add new rows to
+     * @param Object... new rows data
+     */
+    this.addRows = function (position /*, rows ... */ ) {
+      var rows = Array.prototype.slice.call(arguments, 0);
+
+      if (isNaN(position)) {
+        position = _data.length;
+      } else {
+        rows.splice(0, 1);
+      }
+
+      args = rows.slice(0);
+
+      /*
+       * Building args
+       * It should be:  [ position, 0, rows... ]
        */
-      this.sort = function(col, ignoreCase) {
-        var column = options.columns[col]; // get column data
-        if (options.canBeSorted(column) === false) return this;
 
-        var asc = true;
-        if (_asc[0] == col) {
-          asc = !_asc[1]; // get ascendent/descendent flag
-        } //else {
-        _currentData = $.introSort( _currentData, function(aRow,bRow){
-          var aDatum = aRow[column.key],
-            bDatum = bRow[column.key];
-          if (ignoreCase && (typeof aDatum == 'string')) {
-            // transform into lower case if ignoreCase flag is true
-            aDatum = aDatum.toLowerCase();
-            bDatum = bDatum.toLowerCase();
-          }
-          if (options.sort[column.key] && options.sort[column.key].apply) {
-            return options.sort[column.key](aRow,bRow,asc);
-          } else {
-            return asc ? (aDatum < bDatum) : (aDatum > bDatum);
-          }
-        }, function(datum1, index1, datum2, index2){
-          datum1._current_index = index1;
-          datum2._current_index = index2;
-        });
+      args.splice(0, 0, position, 0);
 
-        // empties older selected rows
-        _selectedIndexes = [];
+      /*
+       * Add new row to collection
+       * It should be:  _data.splice( position, 0, rows... )
+       */
+      Array.prototype.splice.apply(_data, args);
 
-        _asc = [col,asc];
-        $self.trigger('columnSort', [col, column, _columns[col], asc, _columns]); // fire event
-        var viewPort = getViewPort();
-        newViewPort();
+
+      var positionToRedraw = position;
+      if (isFiltered()) {
+        positionToRedraw = _currentData.length;
+        var result = filter(_queryText, rows);
+        for (var i = 0, l = result.data.length; i < l; i++) {
+          result.data[i]._original_index = position + i;
+          result.data[i]._current_index = _currentData.push(result.data[i]) - 1;
+        }
+      }
+
+      var viewPort = getViewPort();
+
+      this.resize();
+
+      if (positionToRedraw >= viewPort.from && positionToRedraw <= viewPort.to) {
         removeOlderRows(viewPort.from, viewPort.to);
         _showData(true);
+      }
 
-        return this;
-      };
+      $self.trigger('newRows', [position, rows]);
 
-      /*****************
-       *   FILTERING
-       *****************/
+      return this;
+    };
 
-      /**
-       * Returns new filtered data objects
-       */
-      this.dataFilter = function(query) {
-        return filter(query, _data).data;
-      };
+    /**
+     * Removes single row from collection at the specified postion
+     */
+    this.removeRow = function (position) {
+      return this.removeRows.apply(this, arguments);
+    };
 
-      /**
-       * Returns new filtered data indexes
-       */
-      this.indexesFilter = function(query) {
-        return filter(query, _data).indexes;
-      };
+    /**
+     * Removes more than one row from collection
+     * @param Integer... all position to remove
+     */
+    this.removeRows = function ( /*position ... */ ) {
 
-      /**
-       * Searches given text in the collection
-       * Returns new data collection length
-       */
-      this.search = function(text) {
-        if (text === undefined || text === null) text = '';
-        text = $.trim("" + text);
-        _queryText = text;
+      var
+      indexes = Array.prototype.slice.call(arguments, 0),
+        removedRows = [],
+        viewPort = getViewPort(),
+        redraw = false;
 
-        if (!text) {
-          return this.data( this.data() );
+      // Sort indexes from greater to lesser
+      indexes = unique(indexes).sort(function (a, b) {
+        return a < b;
+      });
+
+
+      for (var i = 0, j = 0, l = indexes.length, b, c, num = 1; i < l; i++) {
+        b = indexes[i];
+        c = indexes[i + 1];
+
+        $self.trigger('removeData', [b, _data[b]]); // fire event on single row
+        redraw = (b >= viewPort.from && b <= viewPort.to);
+
+        unselectRowOnRemoveRow(b);
+
+        // calculate sequential indexes
+        if ((b - 1) == c) {
+          num++;
+          continue;
         }
 
-        this.clearSelection();
+        var removed = Array.prototype.splice.apply(_data, [indexes[j + (num - 1)], num]);
+        removedRows = removedRows.concat(removed);
 
-        var result = filter(text, _data, true);
+        j = i + 1;
+        num = 1;
+      }
 
-        showData(result.data);
+      if (removedRows.length && isFiltered()) {
+        var result = filter(_queryText, removedRows);
+        if (result.data.length) {
+          for (var i = result.data.length - 1; i >= 0; i--) {
+            var datum = result.data[i];
+            if (datum._current_index === undefined) continue;
+            Array.prototype.splice.apply(_currentData, [datum._current_index, 1]);
 
-        return result.data.length;
-      };
-
-      /*******************
-       *    UTILITY
-       *******************/
-
-      /**
-       * Converts given index into current index shown
-       */
-      this.originalIndexToCurrentIndex = function(index) {
-        return originalIndexToCurrentIndex(index);
-      };
-
-      /**
-       * Returns given index into global index
-       */
-      this.currentIndexToOriginalIndex = function(index) {
-        return currentIndexToOriginalIndex(index);
-      };
-
-      /********************
-       *   MANIPULATION
-       *******************/
-
-      /**
-       * Adds single row to collection at the specified position
-       */
-      this.addRow = function(position, row) {
-        return this.addRows.apply(this, arguments);
-      };
-
-      /**
-       * Adds more than one row to colelction at the specified position
-       * @param position integer representing the position which add new rows to
-       * @param Object... new rows data
-       */
-      this.addRows = function(position /*, rows ... */) {
-        var rows = Array.prototype.slice.call(arguments, 0);
-
-        if (isNaN(position)) {
-            position = _data.length;
-        } else {
-            rows.splice(0, 1);
-        }
-
-        args = rows.slice(0);
-
-        /*
-         * Building args
-         * It should be:  [ position, 0, rows... ]
-         */
-
-        args.splice(0, 0, position, 0);
-
-        /*
-         * Add new row to collection
-         * It should be:  _data.splice( position, 0, rows... )
-         */
-        Array.prototype.splice.apply(_data, args);
-
-
-        var positionToRedraw = position;
-        if ( isFiltered() ) {
-          positionToRedraw = _currentData.length;
-          var result = filter(_queryText, rows);
-          for (var i = 0, l = result.data.length; i < l; i++) {
-            result.data[i]._original_index = position + i;
-            result.data[i]._current_index = _currentData.push( result.data[i] ) - 1;
+            redraw = redraw || (datum._current_index >= viewPort.from && datum._current_index <= viewPort.to);
           }
+        } else {
+          redraw = false;
         }
+      }
 
-        var viewPort = getViewPort();
-
+      if (redraw) {
         this.resize();
 
-        if (positionToRedraw >= viewPort.from && positionToRedraw <= viewPort.to) {
-          removeOlderRows(viewPort.from, viewPort.to);
-          _showData(true);
-        }
+        removeOlderRows(viewPort.from, viewPort.to);
+        _showData(true);
+      }
 
-        $self.trigger('newRows', [position, rows]);
+      return this;
 
-        return this;
-      };
+    };
 
-      /**
-       * Removes single row from collection at the specified postion
-       */
-      this.removeRow = function(position) {
-        return this.removeRows.apply(this, arguments);
-      };
+    /**
+     * Replaces single row at the specified position with new given row data
+     */
+    this.replaceRow = function (position, row) {
+      return this.replaceRows.apply(this, [
+        [position, row]
+      ]);
+    };
 
-      /**
-       * Removes more than one row from collection
-       * @param Integer... all position to remove
-       */
-      this.removeRows = function(/*position ... */) {
+    /**
+     * Replaces more than one row from collection a the specified position
+     * @param Array... a grouped 'position, row' for each row you want to replace
+     */
+    this.replaceRows = function ( /* [position, row] ... */ ) {
 
-        var
-          indexes = Array.prototype.slice.call(arguments, 0),
-          removedRows = [],
-          viewPort = getViewPort(),
-          redraw = false;
-
-        // Sort indexes from greater to lesser
-        indexes = unique(indexes).sort(function(a, b) {
-          return a < b;
-        });
-
-
-        for (var i = 0, j = 0, l = indexes.length, b, c, num = 1; i < l; i++) {
-          b = indexes[i];
-          c = indexes[i + 1];
-
-          $self.trigger('removeData', [b, _data[b]]); // fire event on single row
-          redraw = (b >= viewPort.from && b <= viewPort.to);
-
-          unselectRowOnRemoveRow(b);
-
-          // calculate sequential indexes
-          if ((b - 1) == c) {
-            num++;
-            continue;
-          }
-
-          var removed = Array.prototype.splice.apply(_data, [indexes[j + (num - 1)], num]);
-          removedRows = removedRows.concat(removed);
-
-          j = i + 1;
-          num = 1;
-        }
-
-        if ( removedRows.length && isFiltered() ) {
-          var result = filter(_queryText, removedRows);
-          if (result.data.length) {
-            for (var i = result.data.length - 1; i >= 0; i--) {
-              var datum = result.data[i];
-              if (datum._current_index === undefined) continue;
-              Array.prototype.splice.apply(_currentData, [datum._current_index, 1]);
-
-              redraw = redraw || (datum._current_index >= viewPort.from && datum._current_index <= viewPort.to);
-            }
-          } else {
-            redraw = false;
-          }
-        }
-
-        if (redraw) {
-          this.resize();
-
-          removeOlderRows(viewPort.from, viewPort.to);
-          _showData(true);
-        }
-
-        return this;
-
-      };
-
-      /**
-       * Replaces single row at the specified position with new given row data
-       */
-      this.replaceRow = function(position, row) {
-        return this.replaceRows.apply(this, [
-            [position, row]
-          ]);
-      };
-
-      /**
-       * Replaces more than one row from collection a the specified position
-       * @param Array... a grouped 'position, row' for each row you want to replace
-       */
-      this.replaceRows = function(/* [position, row] ... */) {
-
-        var args = Array.prototype.slice.call(arguments, 0),
+      var args = Array.prototype.slice.call(arguments, 0),
         redraw = false;
-        viewPort = getViewPort();
+      viewPort = getViewPort();
 
-        for (var i_arg = 0, l_arg = args.length; i_arg < l_arg; i_arg++) {
-          var
-            arg = args[i_arg],
-            position = arg[0],
-            row = arg[1],
-            index = position;
+      for (var i_arg = 0, l_arg = args.length; i_arg < l_arg; i_arg++) {
+        var
+        arg = args[i_arg],
+          position = arg[0],
+          row = arg[1],
+          index = position;
 
-          $self.trigger('replaceData', [ position, _data[ position ] , row ]);
+        $self.trigger('replaceData', [position, _data[position], row]);
 
-          redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
+        redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
 
-          var removedRow = Array.prototype.splice.apply(_data, [index, 1, row]);
+        var removedRow = Array.prototype.splice.apply(_data, [index, 1, row]);
 
-          index = !isFiltered() ? index : (function() {
-            if (filter(_queryText, [removedRow[0]], false).data.length)
-              return removedRow[0]._current_index;
-            else
-              return undefined;
-          })();
+        index = !isFiltered() ? index : (function () {
+          if (filter(_queryText, [removedRow[0]], false).data.length) return removedRow[0]._current_index;
+          else return undefined;
+        })();
 
-          if (index !== undefined && isFiltered()) {
+        if (index !== undefined && isFiltered()) {
 
-            /*
+          /*
               if (filter(_queryText, [row]).data.length) {
                 row._original_index = position;
                 row._current_index = index;
                 Array.prototype.splice.apply(_currentData, [index, 1, row]);
               } else {
             */
-                Array.prototype.splice.apply(_currentData, [index, 1, row]);
+          Array.prototype.splice.apply(_currentData, [index, 1, row]);
 
-                // Restore index correctly
-                row._current_index =  removedRow[0]._current_index;
-                row._original_index =  removedRow[0]._original_index;
-            //}
-            redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
-          }
+          // Restore index correctly
+          row._current_index = removedRow[0]._current_index;
+          row._original_index = removedRow[0]._original_index;
+          //}
+          redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
         }
-
-        if (redraw) {
-          this.resize();
-          removeOlderRows(viewPort.from, viewPort.to);
-          _showData(true);
-        }
-
-        return this;
-      };
-
-
-
-      /**
-       * EVENTS
-       */
-
-
-      /**
-       * Adds event to each row
-       */
-      this.addRowsEvent = function(type, fn) {
-        body.delegate('div.row', type, fn);
-        return self;
-      };
-
-      /**
-       * Adds event to TableRender object
-       */
-      this.addTableEvent = function(type, fn) {
-        $self.bind(type, fn);
-        return self;
-      };
-
-      /**
-       * Removes event from table object
-       */
-      this.removeTableEvent = function(type, fn) {
-        $self.unbind(type, fn);
-        return self;
-      };
-
-      /**
-       * Removes event from table rows
-       */
-      this.removeRowsEvent = function(type, fn) {
-        body.undelegate('div.row', type, fn);
-        return self;
-      };
-
-
-
-      /********************
-       * PRIVATE METHODS
-       ********************/
-
-
-      function getColumnIndexByKey(key){
-        var index = -1;
-        $.each( _columns, function(i, item){
-          if ( item.key == key ){
-            index = i;
-            return false;
-          }
-        });
-        return index;
       }
 
-
-      /**
-       * Shows or hides a column at the specified index
-       */
-      function showHideColumn(index, show){
-
-        if ( typeof index != 'number' && typeof index != 'string' ){
-          return false;
-        }
-
-        var col_index = -1;
-        if ( typeof index == 'number'){
-          if ( _columns[ index ] ){
-            col_index = index;
-          }
-        } else {
-
-          col_index = getColumnIndexByKey( index );
-
-        }
-
-        if ( col_index == -1 ){
-          return false;
-        }
-
-        _columns[ col_index ].hidden = !show;
-
-        if ( _header_drawn ){
-          // Redraw header
-          self.drawHeader();
-        }
-
-        // TODO: do we have to redraw the body of the table?
+      if (redraw) {
+        this.resize();
+        removeOlderRows(viewPort.from, viewPort.to);
         _showData(true);
-
-
-        $self.trigger(  ((show ? 'show' : 'hide') + '_column'), [_columns[ col_index ], col_index]);
-        return true;
       }
 
+      return this;
+    };
 
-      /*****************
-       *   FILTERING
-       *****************/
 
-      /**
-       * Filters data collection
-       * @param query String used to filter data
-       * @param data Array the collection to filter
-       * @param attachIndex boolean if true new indexes will be attached to each object
-       */
-      function filter(query, data, attachIndex) {
 
-        query = ("" + query).toLowerCase();
-        var result = {
-          indexes: [],
-          data: []
-        };
+    /**
+     * EVENTS
+     */
 
-        for (var i = 0, l = data.length; i < l; i++) {
-          var found = false;
-          for (var c = 0, lc = options.columns.length; c < lc; c++) {
-            if (attachIndex){
-              data[i]._original_index = i; // store original index
-            }
-            var str = data[i][options.columns[c].key];
-            if (("" + str).toLowerCase().indexOf(query) != -1) {
-              result.indexes.push(i);
-              var currentIndex = result.data.push(data[i]);
-              if ( attachIndex ){
-                data[i]._current_index = (currentIndex - 1);
-              }
-              found = true;
-              break;
-            }
-          }
-          if (!found && attachIndex) data[i]._current_index = i;
+
+    /**
+     * Adds event to each row
+     */
+    this.addRowsEvent = function (type, fn) {
+      body.delegate('div.row', type, fn);
+      return self;
+    };
+
+    /**
+     * Adds event to TableRender object
+     */
+    this.addTableEvent = function (type, fn) {
+      $self.bind(type, fn);
+      return self;
+    };
+
+    /**
+     * Removes event from table object
+     */
+    this.removeTableEvent = function (type, fn) {
+      $self.unbind(type, fn);
+      return self;
+    };
+
+    /**
+     * Removes event from table rows
+     */
+    this.removeRowsEvent = function (type, fn) {
+      body.undelegate('div.row', type, fn);
+      return self;
+    };
+
+
+
+    /********************
+     * PRIVATE METHODS
+     ********************/
+
+
+    function getColumnIndexByKey(key) {
+      var index = -1;
+      $.each(_columns, function (i, item) {
+        if (item.key == key) {
+          index = i;
+          return false;
         }
-        return result;
+      });
+      return index;
+    }
+
+
+    /**
+     * Shows or hides a column at the specified index
+     */
+    function showHideColumn(index, show) {
+
+      if (typeof index != 'number' && typeof index != 'string') {
+        return false;
       }
 
-      /******************
-       *    SELECTION
-       ******************/
+      var col_index = -1;
+      if (typeof index == 'number') {
+        if (_columns[index]) {
+          col_index = index;
+        }
+      } else {
 
-      /**
-       * Marks row as selected intercepting row events
-       */
-      function rowSelection(e) {
-        var
-          // get current HTML row object
-          currentRow = this,
-          // get current HTML row index
-          index = currentRow.offsetTop / (options.rowHeight + options.borderHeight);
+        col_index = getColumnIndexByKey(index);
 
-        if (!options.multiselection)
-          // mark all other selected row as unselected
-          self.clearSelection();
+      }
+
+      if (col_index == -1) {
+        return false;
+      }
+
+      _columns[col_index].hidden = !show;
+
+      if (_header_drawn) {
+        // Redraw header
+        self.drawHeader();
+      }
+
+      // TODO: do we have to redraw the body of the table?
+      _showData(true);
 
 
-        if (! (e.shiftKey || e.metaKey || e.ctrlKey))
-          // clear selected row
-          self.clearSelection();
+      $self.trigger(((show ? 'show' : 'hide') + '_column'), [_columns[col_index], col_index]);
+      return true;
+    }
 
-        if (e.shiftKey && options.multiselection) {
-            // Shift is pressed
-            var
-              _lastSelectedIndex = lastSelectedIndex(),
-              // get last selected index
-              from = Math.min(_lastSelectedIndex + 1, index),
-              to = Math.max(_lastSelectedIndex, index),
-              viewPort = getViewPort();
 
-            // select all rows between interval
-            for (var i = from; i <= to && _currentData[i]; i++) {
-              if ($.inArray(i, selectedIndexes()) == -1) {
-                selectRow(i);
-                if (i >= viewPort.from && i <= viewPort.to) {
-                  var row = self.rowAt(i);
-                  $self.trigger('rowSelection', [i, row, true, _currentData[i]]);
-                }
-              }
-            }
+    /*****************
+     *   FILTERING
+     *****************/
 
-        } else if (e.ctrlKey || e.metaKey) {
-          /* Ctrl is pressed ( CTRL on Mac is identified by metaKey property ) */
+    /**
+     * Filters data collection
+     * @param query String used to filter data
+     * @param data Array the collection to filter
+     * @param attachIndex boolean if true new indexes will be attached to each object
+     */
+    function filter(query, data, attachIndex) {
 
-          // toggle selection
-          if ( $.inArray( index, selectedIndexes() ) > -1) {
-            unselectRow(index);
-            $self.trigger('rowSelection', [index, this, false, _currentData[index]]);
-          } else {
-            selectRow(index);
-            $self.trigger('rowSelection', [index, this, true, _currentData[index]]);
+      query = ("" + query).toLowerCase();
+      var result = {
+        indexes: [],
+        data: []
+      };
+
+      for (var i = 0, l = data.length; i < l; i++) {
+        var found = false;
+        for (var c = 0, lc = options.columns.length; c < lc; c++) {
+          if (attachIndex) {
+            data[i]._original_index = i; // store original index
           }
+          var str = data[i][options.columns[c].key];
+          if (("" + str).toLowerCase().indexOf(query) != -1) {
+            result.indexes.push(i);
+            var currentIndex = result.data.push(data[i]);
+            if (attachIndex) {
+              data[i]._current_index = (currentIndex - 1);
+            }
+            found = true;
+            break;
+          }
+        }
+        if (!found && attachIndex) data[i]._current_index = i;
+      }
+      return result;
+    }
 
+    /******************
+     *    SELECTION
+     ******************/
+
+    /**
+     * Marks row as selected intercepting row events
+     */
+    function rowSelection(e) {
+      var
+      // get current HTML row object
+      currentRow = this,
+        // get current HTML row index
+        index = currentRow.offsetTop / (options.rowHeight + options.borderHeight);
+
+      if (!options.multiselection)
+      // mark all other selected row as unselected
+      self.clearSelection();
+
+
+      if (!(e.shiftKey || e.metaKey || e.ctrlKey))
+      // clear selected row
+      self.clearSelection();
+
+      if (e.shiftKey && options.multiselection) {
+        // Shift is pressed
+        var
+        _lastSelectedIndex = lastSelectedIndex(),
+          // get last selected index
+          from = Math.min(_lastSelectedIndex + 1, index),
+          to = Math.max(_lastSelectedIndex, index),
+          viewPort = getViewPort();
+
+        // select all rows between interval
+        for (var i = from; i <= to && _currentData[i]; i++) {
+          if ($.inArray(i, selectedIndexes()) == -1) {
+            selectRow(i);
+            if (i >= viewPort.from && i <= viewPort.to) {
+              var row = self.rowAt(i);
+              $self.trigger('rowSelection', [i, row, true, _currentData[i]]);
+            }
+          }
+        }
+
+      } else if (e.ctrlKey || e.metaKey) { /* Ctrl is pressed ( CTRL on Mac is identified by metaKey property ) */
+
+        // toggle selection
+        if ($.inArray(index, selectedIndexes()) > -1) {
+          unselectRow(index);
+          $self.trigger('rowSelection', [index, this, false, _currentData[index]]);
         } else {
-          // simple click
           selectRow(index);
           $self.trigger('rowSelection', [index, this, true, _currentData[index]]);
         }
 
+      } else {
+        // simple click
+        selectRow(index);
+        $self.trigger('rowSelection', [index, this, true, _currentData[index]]);
       }
 
-      /**
-       * Returns all selected indexes
-       */
-      function selectedIndexes() {
-        return _selectedIndexes;
-      }
+    }
 
-      /**
-       * Returns last selected index
-       */
-      function lastSelectedIndex() {
-        return selectedIndexes()[selectedIndexes().length - 1];
-      }
+    /**
+     * Returns all selected indexes
+     */
+    function selectedIndexes() {
+      return _selectedIndexes;
+    }
 
-      /**
-       * Adds the specified row index to selected row indexes collection
-       */
-      function selectRow(index) {
-        if (index === undefined || index < 0 || index >= _currentData.length) return;
-        selectedIndexes().push(index);
-      }
+    /**
+     * Returns last selected index
+     */
+    function lastSelectedIndex() {
+      return selectedIndexes()[selectedIndexes().length - 1];
+    }
 
-      /**
-       * Remove the specified row index from selected row indexes collection
-       */
-      function unselectRow(index) {
-        if (index === undefined || index < 0 || index >= _currentData.length) return;
+    /**
+     * Adds the specified row index to selected row indexes collection
+     */
+    function selectRow(index) {
+      if (index === undefined || index < 0 || index >= _currentData.length) return;
+      selectedIndexes().push(index);
+    }
 
-        var pos = $.inArray(index, selectedIndexes());
-        if (pos == -1) return;
+    /**
+     * Remove the specified row index from selected row indexes collection
+     */
+    function unselectRow(index) {
+      if (index === undefined || index < 0 || index >= _currentData.length) return;
 
-        selectedIndexes().splice(pos, 1);
-      }
+      var pos = $.inArray(index, selectedIndexes());
+      if (pos == -1) return;
 
-      /*************************
-       *    MANIPULATING
-       *************************/
+      selectedIndexes().splice(pos, 1);
+    }
 
-      /**
-       * Marks the row at the given position as unselect and fires the correct event
-       */
-      function unselectRowOnRemoveRow(index) {
-        var pos = $.inArray(index, self.selectedIndexes());
-        if (pos != -1) {
-          if ( isFiltered() ) {
-            var result = filter(_queryText, [_data[index]]);
-            if (result.data.length) {
-              var datum = result.data[0];
-              if (datum._current_index !== undefined) {
-                unselectRow(datum._current_index);
-                var row = self.rowAt(datum._current_index);
-                $self.trigger('rowSelection', [index, row, false, _currentData[datum._current_index]]);
-              }
+    /*************************
+     *    MANIPULATING
+     *************************/
+
+    /**
+     * Marks the row at the given position as unselect and fires the correct event
+     */
+    function unselectRowOnRemoveRow(index) {
+      var pos = $.inArray(index, self.selectedIndexes());
+      if (pos != -1) {
+        if (isFiltered()) {
+          var result = filter(_queryText, [_data[index]]);
+          if (result.data.length) {
+            var datum = result.data[0];
+            if (datum._current_index !== undefined) {
+              unselectRow(datum._current_index);
+              var row = self.rowAt(datum._current_index);
+              $self.trigger('rowSelection', [index, row, false, _currentData[datum._current_index]]);
             }
-          } else {
-            unselectRow(index);
-            var row = self.rowAt(index);
-            $self.trigger('rowSelection', [index, row, false, _currentData[index]]);
           }
+        } else {
+          unselectRow(index);
+          var row = self.rowAt(index);
+          $self.trigger('rowSelection', [index, row, false, _currentData[index]]);
         }
-
-        var currentIndex = !isFiltered() ? index : (function() {
-          var datum = _data[index];
-          if (filter(_queryText, [datum]).data.length) return datum._current_index;
-          else return undefined;
-        })();
-
-        if (currentIndex === undefined) return;
-
-        /** Replace current selected indexes */
-        var indexes = unique(selectedIndexes()).sort(function(a, b) {
-          return a > b;
-        });
-        _selectedIndexes = [];
-        for (var i = 0; i < indexes.length; i++) {
-          _selectedIndexes.push(currentIndex > indexes[i] ? indexes[i] : (indexes[i] - 1));
-        }
-
       }
 
-      /********************
-       *     UTILITY
-       ********************/
-
-      /**
-       * Returns the global index by given current index
-       */
-      function currentIndexToOriginalIndex(index) {
-        if (!isFiltered()) return index;
-        var datum = _currentData[index];
-        if (datum._original_index === undefined) return index;
-        return datum._original_index;
-      }
-
-      /**
-       * Returns the current index by given global index
-       */
-      function originalIndexToCurrentIndex(index) {
-        if (!isFiltered()) return index;
+      var currentIndex = !isFiltered() ? index : (function () {
         var datum = _data[index];
-        if (datum._current_index === undefined) return index;
-        return datum._current_index;
+        if (filter(_queryText, [datum]).data.length) return datum._current_index;
+        else return undefined;
+      })();
+
+      if (currentIndex === undefined) return;
+
+      /** Replace current selected indexes */
+      var indexes = unique(selectedIndexes()).sort(function (a, b) {
+        return a > b;
+      });
+      _selectedIndexes = [];
+      for (var i = 0; i < indexes.length; i++) {
+        _selectedIndexes.push(currentIndex > indexes[i] ? indexes[i] : (indexes[i] - 1));
       }
 
-      /**
-       * Returns true if shown data is filtered
-       */
-      function isFiltered() {
-        return (_queryText !== undefined && _queryText.length);
-      }
+    }
 
-      /**
-       * Prevent bug:
-       * jQuery.unique doesn't work fine with array of integers
-       */
-      function unique(array) {
-        var result = [];
-        for (var i = 0, n = array.length; i < n; i++) {
-          var found = false;
-          for (var x = i + 1; x < n; x++) {
-            if (array[x] == array[i]) {
-              found = true;
-              break;
-            }
+    /********************
+     *     UTILITY
+     ********************/
+
+    /**
+     * Returns the global index by given current index
+     */
+    function currentIndexToOriginalIndex(index) {
+      if (!isFiltered()) return index;
+      var datum = _currentData[index];
+      if (datum._original_index === undefined) return index;
+      return datum._original_index;
+    }
+
+    /**
+     * Returns the current index by given global index
+     */
+    function originalIndexToCurrentIndex(index) {
+      if (!isFiltered()) return index;
+      var datum = _data[index];
+      if (datum._current_index === undefined) return index;
+      return datum._current_index;
+    }
+
+    /**
+     * Returns true if shown data is filtered
+     */
+    function isFiltered() {
+      return (_queryText !== undefined && _queryText.length);
+    }
+
+    /**
+     * Prevent bug:
+     * jQuery.unique doesn't work fine with array of integers
+     */
+    function unique(array) {
+      var result = [];
+      for (var i = 0, n = array.length; i < n; i++) {
+        var found = false;
+        for (var x = i + 1; x < n; x++) {
+          if (array[x] == array[i]) {
+            found = true;
+            break;
           }
-          if (found) continue;
-          result.push(array[i]);
         }
-        return result;
+        if (found) continue;
+        result.push(array[i]);
       }
+      return result;
+    }
 
-      /*******************
-       *    LAYOUT
-       *******************/
+    /*******************
+     *    LAYOUT
+     *******************/
 
-      /**
-       * Resets all viewport coordinates
-       */
-      function resetViewPorts() {
-        _oldViewPort = {
-          from: -1,
-          to: -1,
-          height: 0
-        };
-        _viewPort = {
-          from: 0,
-          to: 0,
-          height: 0
-        };
+    /**
+     * Resets all viewport coordinates
+     */
+    function resetViewPorts() {
+      _oldViewPort = {
+        from: -1,
+        to: -1,
+        height: 0
+      };
+      _viewPort = {
+        from: 0,
+        to: 0,
+        height: 0
+      };
+    }
+
+    /**
+     * Returns new viewport coordinates
+     */
+    function newViewPort() {
+      _oldViewPort = _viewPort;
+      return (_viewPort = getViewPort());
+    }
+
+    /**
+     * Calculates the viewport coordinates
+     */
+    function getViewPort() {
+      var
+      scrollTop = body_container[0].scrollTop,
+        bodyHeight = body_container[0].offsetHeight,
+        // calculate the start index
+        from = parseInt(scrollTop / (options.rowHeight + options.borderHeight), 10),
+        // calculate the end index
+        to = from + parseInt((body_container[0].offsetHeight / (options.rowHeight + options.borderHeight)) * 1.5, 10);
+      return {
+        from: Math.max(from - options.threshold, 0),
+        to: to + options.threshold,
+        height: from + to
+      };
+    }
+
+    /**********************
+     *    RENDERING
+     **********************/
+
+    /**
+     * Manages the scroll event
+     */
+    function _scroll(e) {
+      if (_scrollTimer) {
+        clearTimeout(_scrollTimer);
       }
-
-      /**
-       * Returns new viewport coordinates
-       */
-      function newViewPort() {
-        _oldViewPort = _viewPort;
-        return (_viewPort = getViewPort());
-      }
-
-      /**
-       * Calculates the viewport coordinates
-       */
-      function getViewPort() {
-        var
-          scrollTop = body_container[0].scrollTop,
-          bodyHeight = body_container[0].offsetHeight,
-          // calculate the start index
-          from = parseInt(scrollTop / (options.rowHeight + options.borderHeight), 10),
-          // calculate the end index
-          to = from + parseInt((body_container[0].offsetHeight / (options.rowHeight + options.borderHeight)) * 1.5, 10);
-        return {
-          from: Math.max(from - options.threshold, 0),
-          to: to + options.threshold,
-          height: from + to
-        };
-      }
-
-      /**********************
-       *    RENDERING
-       **********************/
-
-      /**
-       * Manages the scroll event
-       */
-      function _scroll(e) {
-        if ( _scrollTimer ){
-          clearTimeout(_scrollTimer);
-        }
-        _scrollTimer = setTimeout(function() {
-          if (_waiting) return;
-          var scrollTop = body_container[0].scrollTop;
-          newViewPort();
-          _showData();
-          $self.trigger('scroll', [scrollTop, body[0].offsetHeight, body_container[0].offsetHeight]); // fire event
-        },1);
-        e.preventDefault(); // prevent default function
-        return false; // stop event
-      }
-
-      /**
-       * Prepares table to add data
-       */
-      function showData(data) {
-
-        _waiting = true;
-
-        _currentData = data;
-        _shownData = new Array(data.length);
-
-        body_container[0].scrollTop = 0;
-
-        body[0].innerHTML = '';
-
-        body.addClass('loading');
-
-        self.resize();
-
-        resetViewPorts();
+      _scrollTimer = setTimeout(function () {
+        if (_waiting) return;
+        var scrollTop = body_container[0].scrollTop;
         newViewPort();
+        _showData();
+        $self.trigger('scroll', [scrollTop, body[0].offsetHeight, body_container[0].offsetHeight]); // fire event
+      }, 1);
+      e.preventDefault(); // prevent default function
+      return false; // stop event
+    }
 
-        //setTimeout(function() {
-          _showData();
-          _waiting = false;
-        //}, 1000);
-        body.removeClass('loading');
-      }
+    /**
+     * Prepares table to add data
+     */
+    function showData(data) {
 
-      /**
-       * Renders table showing data
-       * @param skipRemove if true older rows will be kept in table
-       */
-      function _showData(skipRemove) {
-        var x1 = _oldViewPort.from,
+      _waiting = true;
+
+      _currentData = data;
+      _shownData = new Array(data.length);
+
+      body_container[0].scrollTop = 0;
+
+      body[0].innerHTML = '';
+
+      body.addClass('loading');
+
+      self.resize();
+
+      resetViewPorts();
+      newViewPort();
+
+      //setTimeout(function() {
+      _showData();
+      _waiting = false;
+      //}, 1000);
+      body.removeClass('loading');
+    }
+
+    /**
+     * Renders table showing data
+     * @param skipRemove if true older rows will be kept in table
+     */
+    function _showData(skipRemove) {
+      var x1 = _oldViewPort.from,
         x2 = _oldViewPort.to,
         y1 = _viewPort.from,
         y2 = _viewPort.to,
@@ -1266,207 +1258,202 @@
         to = y2,
         removeFrom, removeTo;
 
-        if (y1 > x1 && y1 < x2) {
-          from = x2;
-          to = Math.max(to, x2);
-          removeFrom = x1;
-          removeTo = y1 - 1;
-        } else if (y2 > x1 && y2 < x2) {
-          removeFrom = to + 1;
-          removeTo = x2;
-          to = Math.min(to, x1);
-        } else if ((y1 > x2 || y2 < x1) && (x1 != -1 && x2 != -1)) {
-          removeFrom = x1;
-          removeTo = x2;
-        }
-
-        renderTable(from, to);
-
-        if (!options.empties || skipRemove) return;
-
-        removeOlderRows(removeFrom, removeTo);
+      if (y1 > x1 && y1 < x2) {
+        from = x2;
+        to = Math.max(to, x2);
+        removeFrom = x1;
+        removeTo = y1 - 1;
+      } else if (y2 > x1 && y2 < x2) {
+        removeFrom = to + 1;
+        removeTo = x2;
+        to = Math.min(to, x1);
+      } else if ((y1 > x2 || y2 < x1) && (x1 != -1 && x2 != -1)) {
+        removeFrom = x1;
+        removeTo = x2;
       }
 
-      /**
-       * Removes rows that are no longer shown
-       */
-      function removeOlderRows(from, to) {
-        for (var i = from; i <= to; i++) {
-          if (_shownData[i] === undefined) continue;
-          _shownData[i].parentNode.removeChild(_shownData[i]);
-          _shownData[i] = undefined;
-        }
+      renderTable(from, to);
+
+      if (!options.empties || skipRemove) return;
+
+      removeOlderRows(removeFrom, removeTo);
+    }
+
+    /**
+     * Removes rows that are no longer shown
+     */
+    function removeOlderRows(from, to) {
+      for (var i = from; i <= to; i++) {
+        if (_shownData[i] === undefined) continue;
+        _shownData[i].parentNode.removeChild(_shownData[i]);
+        _shownData[i] = undefined;
+      }
+    }
+
+    /**
+     * Builds table
+     */
+    function renderTable(from, to) {
+      for (var i = from; i <= to && _currentData[i]; i++) {
+        var row = renderRow(i);
+
+        if (row && (!row.parentNode || row.parentNode !== body[0])) {
+          body[0].appendChild(row);
+          _shownData[i] = row;
+        }(function (_row, _index) {
+          return setTimeout(function () {
+            if ($.inArray(_index, _selectedIndexes) > -1) {
+              $self.trigger('rowSelection', [_index, _row, true, _currentData[_index]]);
+            }
+          }, 1);
+        })(row, i);
+      }
+    }
+
+
+    /**
+     * Build single row
+     */
+    function renderRow(index) {
+      if (!_currentData[index]) return null;
+
+      var
+      datum = _currentData[index],
+        style = 'position:absolute;left:0px;right:0px;';
+      row = _shownData[index];
+
+      if (!row) {
+        // No existing row found
+        // create a new one
+        row = document.createElement("div");
+        row.id = 'row_' + index;
+        $(row).attr('style', style);
       }
 
-      /**
-       * Builds table
-       */
-      function renderTable(from, to) {
-        for (var i = from; i <= to && _currentData[i]; i++) {
-          var row = renderRow(i);
+      // $(row).html('')
+      //   .css('top', (index * (options.rowHeight + options.borderHeight)))
+      //   .css('height', options.rowHeight);
+      $(row).html('').css({
+        'top': (index * (options.rowHeight + options.borderHeight)),
+        'height': options.rowHeight
+      });
 
-          if (row && (!row.parentNode || row.parentNode !== body[0])) {
-            body[0].appendChild(row);
-            _shownData[i] = row;
-          }
-          (function(_row, _index){
-            return setTimeout(function() {
-              if ($.inArray(_index, _selectedIndexes) > -1) {
-                $self.trigger('rowSelection', [_index, _row, true, _currentData[_index]]);
-              }
-            }, 1);
-          })( row, i);
-        }
-      }
+      row = $(options.rowRender(row, datum, _columns, index))[0];
 
-
-      /**
-       * Build single row
-       */
-      function renderRow(index) {
-        if (!_currentData[index]) return null;
-
-        var
-          datum = _currentData[index],
-          style = 'position:absolute;left:0px;right:0px;';
-          row = _shownData[index];
-
-        if ( !row ){
-          // No existing row found
-          // create a new one
-          row = document.createElement("div");
-          row.id = 'row_' + index;
-          $(row).attr('style', style);
-        }
-
-        // $(row).html('')
-        //   .css('top', (index * (options.rowHeight + options.borderHeight)))
-        //   .css('height', options.rowHeight);
-
-        $(row).html('').css({
-          'top': (index * (options.rowHeight + options.borderHeight)),
-          'height': options.rowHeight
-        });
-
-        row = $(options.rowRender(row, datum, _columns, index))[0];
-
-        // if (row) {
-        //   for (var c = 0, l = options.columns.length; c < l; c++) {
-        //     var column = options.columns[c];
-        //     // call column render function
-        //     var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
-        //     col && row.appendChild(col); // faster than jQuery functions
-        //   }
-        // }
-        if ( row ) {
-          $(row).addClass('table_row');
-        }
-        return row;
-      }
-
-      /**
-       * Draw row at the specified position
-       */
-      // function redrawRow(index) {
-      //   var row;
-      //   if ((row = _shownData[index]) === undefined)
-      //     return; // no row to redraw was found
-      //   var newTop = (index * (options.rowHeight + options.borderHeight)); // calculate new row position
-      //   if (row.offsetTop != newTop) {
-      //     if (options.animate) {
-      //       $(row).animate({
-      //         top: newTop
-      //       });
-      //     } else {
-      //       row.style.top = newTop + 'px'; // set new position ( faster than jQuery function )
-      //     }
+      // if (row) {
+      //   for (var c = 0, l = options.columns.length; c < l; c++) {
+      //     var column = options.columns[c];
+      //     // call column render function
+      //     var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
+      //     col && row.appendChild(col); // faster than jQuery functions
       //   }
-      //   return row;
       // }
-
-      /**
-       * Renders single row
-       * This method can be overwritten using 'options.rowRender'
-       */
-      function _rowRender(row, datum, columns, index) {
-        // Faster than jQuery functions
-
-        var cols = self.columns();
-        $.each(cols, function(i, col){
-          var el = document.createElement('div');
-          el.id = "row_" + index + "_column_" + col.key;
-          el.innerHTML = datum[ col.key ];
-          $(el).addClass("column col_" + i);
-          if ( col.hidden ){
-            $(el).addClass('column_hidden');
-          }
-          $(row).append( el );
-        });
-
-        return $(row); // browser compatibility; return a jQuery object
+      if (row) {
+        $(row).addClass('table_row');
       }
+      return row;
+    }
+
+    /**
+     * Draw row at the specified position
+     */
+    // function redrawRow(index) {
+    //   var row;
+    //   if ((row = _shownData[index]) === undefined)
+    //     return; // no row to redraw was found
+    //   var newTop = (index * (options.rowHeight + options.borderHeight)); // calculate new row position
+    //   if (row.offsetTop != newTop) {
+    //     if (options.animate) {
+    //       $(row).animate({
+    //         top: newTop
+    //       });
+    //     } else {
+    //       row.style.top = newTop + 'px'; // set new position ( faster than jQuery function )
+    //     }
+    //   }
+    //   return row;
+    // }
+    /**
+     * Renders single row
+     * This method can be overwritten using 'options.rowRender'
+     */
+    function _rowRender(row, datum, columns, index) {
+      // Faster than jQuery functions
+      var cols = self.columns();
+      $.each(cols, function (i, col) {
+        var el = document.createElement('div');
+        el.id = "row_" + index + "_column_" + col.key;
+        el.innerHTML = datum[col.key];
+        $(el).addClass("column col_" + i);
+        if (col.hidden) {
+          $(el).addClass('column_hidden');
+        }
+        $(row).append(el);
+      });
+
+      return $(row); // browser compatibility; return a jQuery object
+    }
 
 
-      /**
-       * Renders single column
-       * This method can be overwritten using 'options.rowRender'
-       */
-      // function _columnRender(index, key, text, i_row, datum, css, row) {
-      //   // Faster than jQuery functions
-      //   var col = document.createElement('div');
-      //   col.className = 'column col_' + index + ' ' + (css || '');
-      //   col.innerHTML = text;
-      //   return $(col);
-      // }
+    /**
+     * Renders single column
+     * This method can be overwritten using 'options.rowRender'
+     */
+    // function _columnRender(index, key, text, i_row, datum, css, row) {
+    //   // Faster than jQuery functions
+    //   var col = document.createElement('div');
+    //   col.className = 'column col_' + index + ' ' + (css || '');
+    //   col.innerHTML = text;
+    //   return $(col);
+    // }
+    /**
+     * Renders the table header
+     * This method can be overwritten using 'options.rowRender'
+     */
+    function headRender(index, columnData, columns) {
+      return $('<div class="column col_' + index + ' col_' + columnData.key + '" >' + columnData.label + '</div>');
+    }
 
-      /**
-       * Renders the table header
-       * This method can be overwritten using 'options.rowRender'
-       */
-      function headRender(index, columnData, columns) {
-        return $('<div class="column col_' + index + ' col_' + columnData.key + '" >' + columnData.label + '</div>');
-      }
+    /**
+     * Returns true if column can be sorted
+     * This method can be overwritten using 'options.rowRender'
+     */
+    function canBeSorted() {
+      return true;
+    }
 
-      /**
-       * Returns true if column can be sorted
-       * This method can be overwritten using 'options.rowRender'
-       */
-      function canBeSorted() {
-        return true;
-      }
-
-      this.drawHeader();
+    this.drawHeader();
 
   }
 
   /**
- * Attachs TableRender functions to matched HTML object
- * @param {Object} opt
- */
-  $.fn.tablerender = function(opt) {
+   * Attachs TableRender functions to matched HTML object
+   * @param {Object} opt
+   */
+  $.fn.tablerender = function (opt) {
     var _arguments = Array.prototype.slice.call(arguments, 0);
     // Instanciates new TableRender class
     var element = this[0];
-    var klass = $( element ).data( "_tablerender" );
-    if ( !klass ){
+    var klass = $(element).data("_tablerender");
+    if (!klass) {
       klass = new TableRender(element, typeof opt == 'object' ? opt : {});
-      $( element ).data( "_tablerender", klass );
+      $(element).data("_tablerender", klass);
     } else {
       var
-        action = _arguments[0],
+      action = _arguments[0],
         args = _arguments.slice(1);
 
-      if ( klass[ action ] && klass[ action ].apply ){
-        return klass[ action ].apply( klass, args);
+      if (klass[action] && klass[action].apply) {
+        return klass[action].apply(klass, args);
       }
     }
     return klass;
   };
 
 
-  if ( ! $.introSort ) {
+  if (!$.introSort) {
     if (console) {
-      console.warn( "No $.introSort function found" );
+      console.warn("No $.introSort function found");
     }
   }
 })(jQuery);
