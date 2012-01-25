@@ -17,3 +17,11 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
+
+
+
+vendor/assets/javascripts/index.html
+vendor/assets/javascripts/jquery.js
+vendor/assets/javascripts/tablerender.css
+vendor/assets/javascripts/test_cases_body.js
+vendor/assets/javascripts/test_cases_columns.js

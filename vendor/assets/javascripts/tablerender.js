@@ -1,5 +1,5 @@
 ;(function($) {
-  var VERSION = "version 0.1b";
+  var VERSION = "version 0.2b";
   /**
  * Initialization function
  *
@@ -56,7 +56,7 @@
       canBeSorted: canBeSorted,
 
       // boolean:   force to empty table content on scroll
-      empties: false,
+      empties: true,
 
       // int:       indicates how many rows to render before and after paging
       threshold: 15,
@@ -72,7 +72,7 @@
       // Table header wrapper that contains all columns and scrollbar placeholder
       header_container = $('<div class="table_header_container" style="position:absolute;top:0;left:0;right:0;height:' + options.headHeight + 'px;"></div>').appendTo(obj),
       // Table header that contains all columns
-      head = $('<div class="' + options.headCss + '"></div>').appendTo(header_container),
+      head = $('<div class="table_head ' + options.headCss + '"></div>').appendTo(header_container),
       // Table body wrapper that contains the table rows container
       body_container = $('<div class="table_body_container" style="overflow:auto;position:absolute;top:' + options.headHeight + 'px;left:0;right:0;bottom:0;"></div>').appendTo(obj).bind('scroll', _scroll),
       // Table rows container
@@ -150,7 +150,7 @@
         } else {
           options[name] = value
         }
-      }
+      };
 
 
       /**
@@ -165,12 +165,14 @@
         var c = $(options.headRender(index, columnData))[0];
 
         if (c) {
+          $(c).css('float', 'left');
           columnData._html_ = c;
 
           if (
               (index >= _columns.length) ||
               ( _columns[ index ] == undefined ||  _columns[ index ] == null )
-            }{
+
+            ){
               // We are adding a column in an empty position.
               // So, we have to replace the existing undefined object with the new column data
             _columns[ index ] = columnData;
@@ -192,6 +194,9 @@
           }
 
           // TODO: do we have to redraw the body of the table?
+          _showData(true);
+
+          $self.trigger('add_column', [columnData, index]);
 
         }
       };
@@ -231,6 +236,9 @@
         }
 
         // TODO: do we have to redraw the body of the table?
+        _showData(true);
+
+        $self.trigger('remove_column', [col_data, col_index]);
 
         return col_data;
 
@@ -247,15 +255,17 @@
           var element = $(item._html_);
           if ( element.length ){
             if ( item.hidden ){
-              element.addClass('hidden');
+              element.addClass('column_hidden');
+            } else {
+              element.removeClass('column_hidden');
             }
             $(element).appendTo( head )
           }
 
         });
 
-        return true;
-      }
+        return _header_drawn = true;
+      };
 
 
       /**
@@ -273,6 +283,13 @@
       };
 
 
+      this.columns = function(columns){
+        return $.map(_columns.slice(0), function(col, index){
+          if ( col ){
+            return col;
+          }
+        });
+      };
 
 
 
@@ -319,7 +336,16 @@
        */
       this.rowAt = function(index) {
         index = originalIndexToCurrentIndex(index);
-        return redrawRow(index);
+
+        var _row = _shownData[index];
+        if ( _row ){
+          $(_row).css({
+            'top': (index * (options.rowHeight + options.borderHeight)),
+            'height': options.rowHeight
+          });
+        }
+
+        return _row;
       };
 
       /**
@@ -562,7 +588,7 @@
         _queryText = text;
 
         if (!text) {
-            return this.data(this.data());
+          return this.data( this.data() );
         }
 
         this.clearSelection();
@@ -888,8 +914,10 @@
         }
 
         // TODO: do we have to redraw the body of the table?
+        _showData(true);
 
 
+        $self.trigger(  ((show ? 'show' : 'hide') + '_column'), [_columns[ col_index ], col_index]);
         return true;
       };
 
@@ -1268,7 +1296,8 @@
        */
       function renderTable(from, to) {
         for (var i = from; i <= to && _currentData[i]; i++) {
-          var row = (_shownData[i] === undefined) ? renderRow(i) : redrawRow(i);
+          var row = renderRow(i);
+
           if (row && (!row.parentNode || row.parentNode !== body[0])) {
             body[0].appendChild(row);
             _shownData[i] = row;
@@ -1292,57 +1321,82 @@
 
         var
           datum = _currentData[index],
-          style = 'height:' + options.rowHeight + 'px;position:absolute;top:' + (index * (options.rowHeight + options.borderHeight)) + 'px;left:0;right:0;';
-          row = null
-        if ( options.rowTemplate ) {
-          row = options.rowTemplate(index, datum);
-        } else {
-          row = $(options.rowRender(index, datum, style, options.rowHeight, options.rowCss))[0];
+          style = 'position:absolute;left:0px;right:0px;';
+          row = _shownData[index];
+
+        if ( !row ){
+          // No existing row found
+          // create a new one
+          row = document.createElement("div");
+          row.id = 'row_' + index;
+          $(row).attr('style', style);
         }
 
-        if (row && !options.rowTemplate) {
-          for (var c = 0, l = options.columns.length; c < l; c++) {
-            var column = options.columns[c];
-            // call column render function
-            var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
-            col && row.appendChild(col); // faster than jQuery functions
-          }
+        // $(row).html('')
+        //   .css('top', (index * (options.rowHeight + options.borderHeight)))
+        //   .css('height', options.rowHeight);
+
+        $(row).html('').css({
+          'top': (index * (options.rowHeight + options.borderHeight)),
+          'height': options.rowHeight
+        });
+
+        row = $(options.rowRender(row, datum, _columns, index))[0];
+
+        // if (row) {
+        //   for (var c = 0, l = options.columns.length; c < l; c++) {
+        //     var column = options.columns[c];
+        //     // call column render function
+        //     var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
+        //     col && row.appendChild(col); // faster than jQuery functions
+        //   }
+        // }
+        if ( row ) {
+          $(row).addClass('table_row');
         }
-        if ( row ) $(row).addClass('row')
         return row;
       }
 
       /**
        * Draw row at the specified position
        */
-      function redrawRow(index) {
-        var row;
-        if ((row = _shownData[index]) === undefined)
-          return; // no row to redraw was found
-        var newTop = (index * (options.rowHeight + options.borderHeight)); // calculate new row position
-        if (row.offsetTop != newTop) {
-          if (options.animate) {
-            $(row).animate({
-              top: newTop
-            });
-          } else {
-            row.style.top = newTop + 'px'; // set new position ( faster than jQuery function )
-          }
-        }
-        return row;
-      }
+      // function redrawRow(index) {
+      //   var row;
+      //   if ((row = _shownData[index]) === undefined)
+      //     return; // no row to redraw was found
+      //   var newTop = (index * (options.rowHeight + options.borderHeight)); // calculate new row position
+      //   if (row.offsetTop != newTop) {
+      //     if (options.animate) {
+      //       $(row).animate({
+      //         top: newTop
+      //       });
+      //     } else {
+      //       row.style.top = newTop + 'px'; // set new position ( faster than jQuery function )
+      //     }
+      //   }
+      //   return row;
+      // }
 
       /**
        * Renders single row
        * This method can be overwritten using 'options.rowRender'
        */
-      function _rowRender(index, datum, style, rowHeight, css) {
+      function _rowRender(row, datum, columns, index) {
         // Faster than jQuery functions
-        var row = document.createElement("div");
-        row.id = 'row_' + index; // set id
-        row.className = (css || '');
 
-        return $(row).attr('style', style); // browser compatibility; return a jQuery object
+        var cols = self.columns();
+        $.each(cols, function(i, col){
+          var el = document.createElement('div');
+          el.id = "row_" + index + "_column_" + col.key;
+          el.innerHTML = datum[ col.key ];
+          $(el).addClass("column col_" + i);
+          if ( col.hidden ){
+            $(el).addClass('column_hidden');
+          }
+          $(row).append( el );
+        });
+
+        return $(row); // browser compatibility; return a jQuery object
       }
 
 
@@ -1350,20 +1404,20 @@
        * Renders single column
        * This method can be overwritten using 'options.rowRender'
        */
-      function _columnRender(index, key, text, i_row, datum, css, row) {
-        // Faster than jQuery functions
-        var col = document.createElement('div');
-        col.className = 'column col_' + index + ' ' + (css || '');
-        col.innerHTML = text;
-        return $(col);
-      }
+      // function _columnRender(index, key, text, i_row, datum, css, row) {
+      //   // Faster than jQuery functions
+      //   var col = document.createElement('div');
+      //   col.className = 'column col_' + index + ' ' + (css || '');
+      //   col.innerHTML = text;
+      //   return $(col);
+      // }
 
       /**
        * Renders the table header
        * This method can be overwritten using 'options.rowRender'
        */
-      function headRender(index, key, label, columns) {
-        return $('<div class="column col_' + index + ' col_' + key + '" >' + label + '</div>');
+      function headRender(index, columnData, columns) {
+        return $('<div class="column col_' + index + ' col_' + columnData.key + '" >' + columnData.label + '</div>');
       }
 
       /**
@@ -1374,20 +1428,32 @@
         return true;
       }
 
+      this.drawHeader();
+
   }
 
   /**
  * Attachs TableRender functions to matched HTML object
  * @param {Object} opt
  */
-  $.fn.table = function(opt) {
-    if (!opt)
-      return this.data("_table"); // return the TableRender instance if no arguments passed
+  $.fn.tablerender = function(opt) {
+    var _arguments = Array.prototype.slice.call(arguments, 0);
+    // Instanciates new TableRender class
+    var element = this[0];
+    var klass = $( element ).data( "_tablerender" );
+    if ( !klass ){
+      klass = new TableRender(element, typeof opt == 'object' ? opt : {});
+      $( element ).data( "_tablerender", klass );
+    } else {
+      var
+        action = _arguments[0],
+        args = _arguments.slice(1);
 
-    return this.each(function() {
-      // Instanciates new TableRender class
-      $(this).data( "_table", new TableRender(this, opt) );
-    });
+      if ( klass[ action ] && klass[ action ].apply ){
+        return klass[ action ].apply( klass, args);
+      }
+    }
+    return klass;
   };
 
 
@@ -1396,5 +1462,4 @@
       console.warn( "No $.introSort function found" );
     }
   }
-
 })(jQuery);
