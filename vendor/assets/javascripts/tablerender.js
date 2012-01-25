@@ -8,120 +8,116 @@
  * @return TableRender instance
  */
   function TableRender(obj, opts) {
-    
+
     this.version = VERSION;
-    
+
     // Get initial options correctly
     var options = $.extend(true, {
       // String:    table header stylesheet class
       headCss: '',
-      
+
       // String:    table body stylesheet class
       bodyCss: '',
-      
-      // Array:     columns list ( ie:  [ { key: 'key', label: 'label'}, { key: 'key', label: 'label'} ]   )
+
+      // Array:     columns list ( ie:  [ { key: 'key', label: 'label', hidden: false}, { key: 'key', label: 'label', hidden: true} ]   )
       columns: [],
-      
+
       // int:       row height in pixel
       rowHeight: 20,
-      
+
       // int:       header height
       headHeight: 20,
-      
+
       // int:       row border in pixel ( used if border css setting is set )
       borderHeight: 0,
-      
+
       // boolean:   enabled or disable the column sort function
       sortable: false,
-      
-      // String:    table rows stylesheet class
-      rowCss: '',
-      
-      // String:    table columns stylesheet class
-      colCss: '',
-      
+
       // function:  used to customize the table header render
       headRender: headRender,
-      
+
       // function:  used to customize the table rows render
       rowRender: _rowRender,
-      
-      // function:  used to customize the table row colums render
-      colRender: _columnRender,
-      
+
       // boolean:   enable or disable animations used on remove rows event.
       animate: false,
-      
+
       // boolean:   enable or disable the row selection management
       selection: false,
-      
+
       // boolean:   enable or disable the multiselection management ( used with  'selection = true' only )
       multiselection: false,
-      
+
       // hash:      contains the sortable function,
       sort: {},
-      
+
       // function:  enable or disable sortable function for a specified column
       canBeSorted: canBeSorted,
-      
+
       // boolean:   force to empty table content on scroll
       empties: false,
-      
+
       // int:       indicates how many rows to render before and after paging
       threshold: 15,
-      
-      // Function:  used to render entire row
-      rowTemplate: null
+
     }, opts),
 
-    self = this,
-      
     // shortcut to 'this' instance
+    self = this,
+
     $self = $(self); // shortcut to jQuery functions
 
     var
+      // Table header wrapper that contains all columns and scrollbar placeholder
       header_container = $('<div class="table_header_container" style="position:absolute;top:0;left:0;right:0;height:' + options.headHeight + 'px;"></div>').appendTo(obj),
-      // Table header wrapper that contains all columns and scrollbar placeholder 
-      head = $('<div class="' + options.headCss + '"></div>').appendTo(header_container),
       // Table header that contains all columns
-      body_container = $('<div class="table_body_container" style="overflow:auto;position:absolute;top:' + options.headHeight + 'px;left:0;right:0;bottom:0;"></div>').appendTo(obj).bind('scroll', _scroll),
+      head = $('<div class="' + options.headCss + '"></div>').appendTo(header_container),
       // Table body wrapper that contains the table rows container
-      body = $('<div class="table_body ' + options.bodyCss + '" style="position:relative;" ></div>').appendTo(body_container); // Table rows container 
+      body_container = $('<div class="table_body_container" style="overflow:auto;position:absolute;top:' + options.headHeight + 'px;left:0;right:0;bottom:0;"></div>').appendTo(obj).bind('scroll', _scroll),
+      // Table rows container
+      body = $('<div class="table_body ' + options.bodyCss + '" style="position:relative;" ></div>').appendTo(body_container);
+
+
+
 
     var
+      // True once header has been drawed
+      _header_drawn = false,
+
       _waiting = false,
-      
+
       // collection that contains all rows data
       _data = [],
-      
+
       // collection that contains all rows data currently filtered
       _currentData = [],
-      
+
       // collection that contains all rendered rows as HTML object
       _shownData = [],
-      
+
       // collection that contains all selected rows index
       _selectedIndexes = [],
-      
+
       // stores the sortable data
       _asc = [],
-      
+
       // store scroll thread handle id
       _scrollTimer,
-      
+
       // Stores the query text used to filter collection rows
       _queryText,
-      
+
       // true if table is currently sorted
       _sorted = false,
-      
+
       // Current coordinates about viewport currenlty shown
       _oldViewPort = {
           from: 0,
           to: 0,
           height: 0
       },
-      
+
       // Coordinates about new viewport to show
       _viewPort = {
           from: 0,
@@ -131,17 +127,10 @@
       // Collection of coloumns
       _columns = []; // HTML columns object collection
 
-      
+
       $(options.columns).each(function(i, col) {
-        // build column
-        var c = $(options.headRender(i, col.key, col.label, options.columns))[0];
-        if (c) {
-          c = $(c).appendTo(head); // append column to table head HTML object
-          _columns[i] = c; // store column object into collection
-          options.sortable && $(c).bind('click', function(e) {
-            self.sort(i, true); // bind the sortable event
-          });
-        }
+        // add column
+        self.addColumn(col, i);
       });
 
       if (options.selection) {
@@ -152,9 +141,9 @@
 
       /**
        * PUBLIC METHODS
-       */ 
-      
-      
+       */
+
+
       this.option = function(name, value) {
         if ( value == undefined || value == null ) {
           return options[name];
@@ -162,8 +151,131 @@
           options[name] = value
         }
       }
-      
-      
+
+
+      /**
+       * Adds column at the specified index
+       *
+       * @param columnData is an Object containing the column data
+       * @param index is an integer used as index of the column
+       */
+      this.addColumn = function(columnData, index){
+        index = typeof index == 'number' ? index : _columns.length;
+
+        var c = $(options.headRender(index, columnData))[0];
+
+        if (c) {
+          columnData._html_ = c;
+
+          if (
+              (index >= _columns.length) ||
+              ( _columns[ index ] == undefined ||  _columns[ index ] == null )
+            }{
+              // We are adding a column in an empty position.
+              // So, we have to replace the existing undefined object with the new column data
+            _columns[ index ] = columnData;
+
+          } else {
+            // Add a column into an already non-empty position.
+            _columns.splice( index, 0, columnData);
+          }
+
+          // store column object into collection
+          options.sortable && $(c).bind('click', function(e) {
+            self.sort(i, true); // bind the sortable event
+          });
+
+
+          if ( _header_drawn ){
+            // Redraw header
+            this.drawHeader();
+          }
+
+          // TODO: do we have to redraw the body of the table?
+
+        }
+      };
+
+
+      /**
+       * Removes column at the specified index or key
+       * @param index is an  Integer or a 'key' of the column is being to be removed
+       */
+      this.removeColumn = function(index){
+
+        if ( typeof index != 'number' && typeof index != 'string' ){
+          return false;
+        }
+
+        var col_index = -1;
+        if ( typeof index == 'number'){
+          if ( _columns[ index ] ){
+            col_index = index;
+          }
+        } else {
+
+          col_index = getColumnIndexByKey( index );
+
+        }
+
+        if ( col_index == -1 ){
+          return false;
+        }
+
+
+        var col_data = _columns.splice( col_index, 1 );
+
+        if ( _header_drawn ){
+          // Redraw header
+          this.drawHeader();
+        }
+
+        // TODO: do we have to redraw the body of the table?
+
+        return col_data;
+
+      };
+
+
+
+      this.drawHeader = function(){
+        // Clear the header (remove all columns)
+        head.html('');
+
+        $.each(_columns, function(i, item){
+
+          var element = $(item._html_);
+          if ( element.length ){
+            if ( item.hidden ){
+              element.addClass('hidden');
+            }
+            $(element).appendTo( head )
+          }
+
+        });
+
+        return true;
+      }
+
+
+      /**
+       * Shows a columns at the specified index
+       */
+      this.showColumn = function(index){
+        showHideColumn(index, true);
+      };
+
+      /**
+       * Hides a columns at the specified index
+       */
+      this.hideColumn = function(index){
+        showHideColumn(index, false);
+      };
+
+
+
+
+
       /**
        * Use this method to set new collection data.
        * If not arguments passed, this method returns the entire collection data
@@ -182,7 +294,7 @@
 
         $self.trigger('newData', [data]);
       };
-      
+
       /**
        * Returns the row data at the specified position
        */
@@ -209,7 +321,7 @@
         index = originalIndexToCurrentIndex(index);
         return redrawRow(index);
       };
-      
+
       /**
        * Returns the data row object at the specified position
        */
@@ -367,7 +479,7 @@
         body_container[0].scrollTop = parseInt(scrollTop, 10);
 
         var row = null;
-        if (index >= viewPort.from && index <= viewPort.to) 
+        if (index >= viewPort.from && index <= viewPort.to)
           row = this.rowAt(index);
 
         $self.trigger('scrollTo', [index, row]); // fire event
@@ -377,7 +489,7 @@
       /**************
        *  SORTABLE
        **************/
-      
+
       /**
        * Sorts table by specified column
        * @param col integer value representing the column index
@@ -386,7 +498,7 @@
       this.sort = function(col, ignoreCase) {
         var column = options.columns[col]; // get column data
         if (options.canBeSorted(column) === false) return this;
-        
+
         var asc = true;
         if (_asc[0] == col) {
           asc = !_asc[1]; // get ascendent/descendent flag
@@ -401,14 +513,14 @@
           }
           if (options.sort[column.key] && options.sort[column.key].apply) {
             return options.sort[column.key](aRow,bRow,asc);
-          } else { 
+          } else {
             return asc ? (aDatum < bDatum) : (aDatum > bDatum);
           }
         }, function(datum1, index1, datum2, index2){
           datum1._current_index = index1;
           datum2._current_index = index2;
         });
-        
+
         // empties older selected rows
         _selectedIndexes = [];
 
@@ -425,7 +537,7 @@
       /*****************
        *   FILTERING
        *****************/
-      
+
       /**
        * Returns new filtered data objects
        */
@@ -465,7 +577,7 @@
       /*******************
        *    UTILITY
        *******************/
-      
+
       /**
        * Converts given index into current index shown
        */
@@ -483,7 +595,7 @@
       /********************
        *   MANIPULATION
        *******************/
-      
+
       /**
        * Adds single row to collection at the specified position
        */
@@ -506,21 +618,21 @@
         }
 
         args = rows.slice(0);
-        
+
         /*
          * Building args
          * It should be:  [ position, 0, rows... ]
          */
-        
+
         args.splice(0, 0, position, 0);
-        
-        /* 
+
+        /*
          * Add new row to collection
          * It should be:  _data.splice( position, 0, rows... )
          */
         Array.prototype.splice.apply(_data, args);
-        
-        
+
+
         var positionToRedraw = position;
         if ( isFiltered() ) {
           positionToRedraw = _currentData.length;
@@ -549,7 +661,7 @@
        * Removes single row from collection at the specified postion
        */
       this.removeRow = function(position) {
-          return this.removeRows.apply(this, arguments);
+        return this.removeRows.apply(this, arguments);
       };
 
       /**
@@ -557,7 +669,7 @@
        * @param Integer... all position to remove
        */
       this.removeRows = function(/*position ... */) {
-        
+
         var
           indexes = Array.prototype.slice.call(arguments, 0),
           removedRows = [],
@@ -598,7 +710,7 @@
             for (var i = result.data.length - 1; i >= 0; i--) {
               var datum = result.data[i];
               if (datum._current_index === undefined) continue;
-              Array.prototype.splice.apply(_currentData, datum._current_index, 1);
+              Array.prototype.splice.apply(_currentData, [datum._current_index, 1]);
 
               redraw = redraw || (datum._current_index >= viewPort.from && datum._current_index <= viewPort.to);
             }
@@ -644,7 +756,7 @@
             position = arg[0],
             row = arg[1],
             index = position;
-          
+
           $self.trigger('replaceData', [ position, _data[ position ] , row ]);
 
           redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
@@ -652,7 +764,7 @@
           var removedRow = Array.prototype.splice.apply(_data, [index, 1, row]);
 
           index = !isFiltered() ? index : (function() {
-            if (filter(_queryText, [removedRow[0]], false).data.length) 
+            if (filter(_queryText, [removedRow[0]], false).data.length)
               return removedRow[0]._current_index;
             else
               return undefined;
@@ -668,7 +780,7 @@
               } else {
             */
                 Array.prototype.splice.apply(_currentData, [index, 1, row]);
-                
+
                 // Restore index correctly
                 row._current_index =  removedRow[0]._current_index;
                 row._original_index =  removedRow[0]._original_index;
@@ -691,8 +803,8 @@
       /**
        * EVENTS
        */
-      
-      
+
+
       /**
        * Adds event to each row
        */
@@ -732,10 +844,60 @@
        ********************/
 
 
+      function getColumnIndexByKey(key){
+        var index = -1;
+        $.each( _columns, function(i, item){
+          if ( item.key == key ){
+            index = i;
+            return false;
+          }
+        });
+        return index;
+      }
+
+
+      /**
+       * Shows or hides a column at the specified index
+       */
+      function showHideColumn(index, show){
+
+        if ( typeof index != 'number' && typeof index != 'string' ){
+          return false;
+        }
+
+        var col_index = -1;
+        if ( typeof index == 'number'){
+          if ( _columns[ index ] ){
+            col_index = index;
+          }
+        } else {
+
+          col_index = getColumnIndexByKey( index );
+
+        }
+
+        if ( col_index == -1 ){
+          return false;
+        }
+
+        _columns[ col_index ].hidden = !show;
+
+        if ( _header_drawn ){
+          // Redraw header
+          self.drawHeader();
+        }
+
+        // TODO: do we have to redraw the body of the table?
+
+
+        return true;
+      };
+
+
       /*****************
        *   FILTERING
        *****************/
-      
+
       /**
        * Filters data collection
        * @param query String used to filter data
@@ -771,7 +933,7 @@
       /******************
        *    SELECTION
        ******************/
-      
+
       /**
        * Marks row as selected intercepting row events
        */
@@ -783,14 +945,14 @@
           index = currentRow.offsetTop / (options.rowHeight + options.borderHeight);
 
         if (!options.multiselection)
-          // mark all other selected row as unselected 
+          // mark all other selected row as unselected
           self.clearSelection();
 
-        
+
         if (! (e.shiftKey || e.metaKey || e.ctrlKey))
           // clear selected row
           self.clearSelection();
-        
+
         if (e.shiftKey && options.multiselection) {
             // Shift is pressed
             var
@@ -868,7 +1030,7 @@
       /*************************
        *    MANIPULATING
        *************************/
-      
+
       /**
        * Marks the row at the given position as unselect and fires the correct event
        */
@@ -914,7 +1076,7 @@
       /********************
        *     UTILITY
        ********************/
-      
+
       /**
        * Returns the global index by given current index
        */
@@ -965,7 +1127,7 @@
       /*******************
        *    LAYOUT
        *******************/
-      
+
       /**
        * Resets all viewport coordinates
        */
@@ -1011,7 +1173,7 @@
       /**********************
        *    RENDERING
        **********************/
-      
+
       /**
        * Manages the scroll event
        */
@@ -1137,7 +1299,7 @@
         } else {
           row = $(options.rowRender(index, datum, style, options.rowHeight, options.rowCss))[0];
         }
-        
+
         if (row && !options.rowTemplate) {
           for (var c = 0, l = options.columns.length; c < l; c++) {
             var column = options.columns[c];
@@ -1180,7 +1342,7 @@
         row.id = 'row_' + index; // set id
         row.className = (css || '');
 
-        return $(row).attr('style', style); // browser compatibility; return a jQuery object 
+        return $(row).attr('style', style); // browser compatibility; return a jQuery object
       }
 
 
@@ -1221,14 +1383,14 @@
   $.fn.table = function(opt) {
     if (!opt)
       return this.data("_table"); // return the TableRender instance if no arguments passed
-      
+
     return this.each(function() {
       // Instanciates new TableRender class
       $(this).data( "_table", new TableRender(this, opt) );
     });
   };
-  
-  
+
+
   if ( ! $.introSort ) {
     if (console) {
       console.warn( "No $.introSort function found" );
