@@ -32,7 +32,7 @@
       borderHeight: 0,
 
       // enables or disables the resize function
-      allowResize: true,
+      allowResizeHeader: true,
 
       // boolean:   enabled or disable the column sort function
       sortable: false,
@@ -313,14 +313,13 @@
      * Resizes the table
      */
     this.resize = function () {
-      if ( !options.allowResize ){
-        return this;
-      }
       var _height = _currentData.length * (options.rowHeight + options.borderHeight); // calculate maximum height
       body.css('height', _height); // set height to body
       newViewPort();
 
-      head.width(body.width()); // Set the table header width including scrollbar width fix
+      if ( options.allowResizeHeader ){
+        head.width(body.width()); // Set the table header width including scrollbar width fix
+      }
       $self.trigger('layout'); // fire event
     };
 
