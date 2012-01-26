@@ -41,7 +41,10 @@
       sortable: false,
 
       // function:  used to customize the table header render
-      headRender: headRender,
+      columnRender: headRender,
+
+      // Function that renders the entire header
+      headerRender: undefined,
 
       // function:  used to customize the table rows render
       rowRender: _rowRender,
@@ -228,25 +231,32 @@
       // Clear the header (remove all columns)
       head.html('');
 
-      $.each( this.columns(), function (i, item) {
+      if ( options.headerRender && options.headerRender ){
+        var new_head = options.headerRender( this.columns() );
+        head.replaceWith( new_head );
+        head = $(new_head);
+      } else {
 
-        var element = $(options.headRender(i, item));
+        $.each( this.columns(), function (i, item) {
 
-        if (element.length) {
-          if (item.hidden) {
-            element.addClass('column_hidden');
-          } else {
-            element.removeClass('column_hidden');
+          var element = $(options.columnRender(i, item));
+
+          if (element.length) {
+            if (item.hidden) {
+              element.addClass('column_hidden');
+            } else {
+              element.removeClass('column_hidden');
+            }
+            $(element).appendTo(head);
+            if (options.sortable) {
+              $(element).bind('click', function (e) {
+                self.sort(i, true); // bind the sortable event
+              });
+            }
           }
-          $(element).appendTo(head);
-          if (options.sortable) {
-            $(element).bind('click', function (e) {
-              self.sort(i, true); // bind the sortable event
-            });
-          }
-        }
 
-      });
+        });
+      }
 
       return (_header_drawn = true);
     };
