@@ -125,15 +125,6 @@
       },
       // Collection of coloumns
       _columns = []; // HTML columns object collection
-    $(options.columns).each(function (i, col) {
-      // add column
-      self.addColumn(col, i);
-    });
-
-    if (options.selection) {
-      // bind the selection event
-      body.delegate('div.row', 'click', rowSelection);
-    }
 
 
     /**
@@ -1424,6 +1415,19 @@
     function canBeSorted() {
       return true;
     }
+
+
+
+    $(options.columns).each(function (i, col) {
+      // add column
+      self.addColumn(col, i);
+    });
+
+    if (options.selection) {
+      // bind the selection event
+      body.delegate('div.row', 'click', rowSelection);
+    }
+
 
     this.drawHeader();
 
