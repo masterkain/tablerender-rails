@@ -1,4 +1,3 @@
-;
 (function ($) {
   var VERSION = "version 0.2b";
   /**
@@ -126,15 +125,6 @@
       },
       // Collection of coloumns
       _columns = []; // HTML columns object collection
-    $(options.columns).each(function (i, col) {
-      // add column
-      self.addColumn(col, i);
-    });
-
-    if (options.selection) {
-      // bind the selection event
-      body.delegate('div.row', 'click', rowSelection);
-    }
 
 
     /**
@@ -195,7 +185,6 @@
         _showData(true);
 
         $self.trigger('add_column', [columnData, index]);
-
       }
     };
 
@@ -248,7 +237,7 @@
       // Clear the header (remove all columns)
       head.html('');
 
-      $.each(_columns, function (i, item) {
+      $.each( this.columns(), function (i, item) {
 
         var element = $(item._html_);
         if (element.length) {
@@ -1338,21 +1327,46 @@
         'height': options.rowHeight
       });
 
-      row = $(options.rowRender(row, datum, _columns, index))[0];
+        row = $(options.rowRender(row, datum, self.columns(), index))[0];
 
-      // if (row) {
-      //   for (var c = 0, l = options.columns.length; c < l; c++) {
-      //     var column = options.columns[c];
-      //     // call column render function
-      //     var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
-      //     col && row.appendChild(col); // faster than jQuery functions
-      //   }
-      // }
-      if (row) {
-        $(row).addClass('table_row');
+        // if (row) {
+        //   for (var c = 0, l = options.columns.length; c < l; c++) {
+        //     var column = options.columns[c];
+        //     // call column render function
+        //     var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
+        //     col && row.appendChild(col); // faster than jQuery functions
+        //   }
+        // }
+        if ( row ) {
+          $(row).addClass('table_row');
+        }
+        return row;
       }
-      return row;
-    }
+
+      /**
+       * Renders single row
+       * This method can be overwritten using 'options.rowRender'
+       */
+      function _rowRender(row, datum, columns, index) {
+        // Faster than jQuery functions
+
+        var cols = columns;
+        $.each(cols, function(i, col){
+          var el = document.createElement('div');
+          el.id = "row_" + index + "_column_" + col.key;
+          el.innerHTML = datum[ col.key ];
+          $(el).addClass("column col_" + i);
+          if ( col.hidden ){
+            $(el).addClass('column_hidden');
+          }
+          $(row).append( el );
+        });
+
+        if (row) {
+          $(row).addClass('table_row');
+        }
+        return $(row); // browser compatibility; return a jQuery object
+      }
 
     /**
      * Draw row at the specified position
@@ -1373,27 +1387,6 @@
     //   }
     //   return row;
     // }
-    /**
-     * Renders single row
-     * This method can be overwritten using 'options.rowRender'
-     */
-    function _rowRender(row, datum, columns, index) {
-      // Faster than jQuery functions
-      var cols = self.columns();
-      $.each(cols, function (i, col) {
-        var el = document.createElement('div');
-        el.id = "row_" + index + "_column_" + col.key;
-        el.innerHTML = datum[col.key];
-        $(el).addClass("column col_" + i);
-        if (col.hidden) {
-          $(el).addClass('column_hidden');
-        }
-        $(row).append(el);
-      });
-
-      return $(row); // browser compatibility; return a jQuery object
-    }
-
 
     /**
      * Renders single column
@@ -1421,6 +1414,19 @@
     function canBeSorted() {
       return true;
     }
+
+
+
+    $(options.columns).each(function (i, col) {
+      // add column
+      self.addColumn(col, i);
+    });
+
+    if (options.selection) {
+      // bind the selection event
+      body.delegate('div.row', 'click', rowSelection);
+    }
+
 
     this.drawHeader();
 
