@@ -185,7 +185,6 @@
         _showData(true);
 
         $self.trigger('add_column', [columnData, index]);
-
       }
     };
 
@@ -238,7 +237,7 @@
       // Clear the header (remove all columns)
       head.html('');
 
-      $.each(_columns, function (i, item) {
+      $.each( this.columns(), function (i, item) {
 
         var element = $(item._html_);
         if (element.length) {
