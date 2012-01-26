@@ -1341,9 +1341,6 @@
         'height': options.rowHeight
       });
 
-      if ( row ) {
-        $(row).addClass('table_row');
-      }
       return row;
     }
 
