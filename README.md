@@ -10,7 +10,7 @@ Methods:
 
   * `addRow`, `addRows`
   * `removeRow`, `removeRows`
-  * `replaceRow`, replaceRows`
+  * `replaceRow`, `replaceRows`
   * `search`
   * `filter`
   * `sort`

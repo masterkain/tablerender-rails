@@ -1319,9 +1319,11 @@
         $(row).attr('style', style);
       }
 
+      $(row).html('');
+
       row = $(options.rowRender(row, datum, self.columns(), index))[0];
 
-      $(row).html('').css({
+      $(row).css({
         'top': (index * (options.rowHeight + options.borderHeight)),
         'height': options.rowHeight
       });
