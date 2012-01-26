@@ -1287,9 +1287,17 @@
         var row = renderRow(i);
 
         if (row && (!row.parentNode || row.parentNode !== body[0])) {
-          body[0].appendChild(row);
+          var older_row = _shownData[i];
+
+          if ( older_row && (older_row.parentNode === body[0]) ){
+            // Row has been already injected to body. Replace child with the new one
+            body[0].replaceChild(row, older_row);
+          } else {
+            body[0].appendChild(row);
+          }
           _shownData[i] = row;
-        }(function (_row, _index) {
+        }
+        (function (_row, _index) {
           return setTimeout(function () {
             if ($.inArray(_index, _selectedIndexes) > -1) {
               $self.trigger('rowSelection', [_index, _row, true, _currentData[_index]]);
