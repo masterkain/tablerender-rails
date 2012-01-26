@@ -82,7 +82,7 @@
       // Table header that contains all columns
       head = $('<div class="table_head ' + options.headCss + '"></div>').appendTo(header_container),
       // Table body wrapper that contains the table rows container
-      body_container = $('<div class="table_body_container" style="overflow:auto;position:absolute;top:' + (options.bodyTopPosition || options.headHeight) + 'px;left:0;right:0;bottom:0;"></div>').appendTo(obj).bind('scroll', _scroll),
+      body_container = $('<div class="table_body_container" style="overflow-y:scroll;position:absolute;top:' + (options.bodyTopPosition || options.headHeight) + 'px;left:0;right:0;bottom:0;"></div>').appendTo(obj).bind('scroll', _scroll),
       // Table rows container
       body = $('<div class="table_body ' + options.bodyCss + '" style="position:relative;" ></div>').appendTo(body_container);
 
