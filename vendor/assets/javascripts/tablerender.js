@@ -1348,7 +1348,7 @@
           'height': options.rowHeight
         });
 
-        row = $(options.rowRender(row, datum, _columns, index))[0];
+        row = $(options.rowRender(row, datum, self.columns(), index))[0];
 
         // if (row) {
         //   for (var c = 0, l = options.columns.length; c < l; c++) {
@@ -1391,7 +1391,7 @@
       function _rowRender(row, datum, columns, index) {
         // Faster than jQuery functions
 
-        var cols = self.columns();
+        var cols = columns;
         $.each(cols, function(i, col){
           var el = document.createElement('div');
           el.id = "row_" + index + "_column_" + col.key;
