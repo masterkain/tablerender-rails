@@ -9,13 +9,13 @@ Given a JSON object, TableRender parses, renders, filters and sorts all data.
 Methods:
 
   * `addRow`, `addRows`
-  * `removeRow`, removeRows`
+  * `removeRow`, `removeRows`
   * `replaceRow`, replaceRows`
   * `search`
   * `filter`
   * `sort`
 
-Supported browsers: 
+Supported browsers:
 
   * Internet Explorer 6 (not tested)
   * Internet Explorer 7
@@ -56,7 +56,7 @@ Example
         return column != 3
       }
     });
-  
+
     var jsonData = [];
     for ( var i=0; i < 100000; i++ ) {
       jsonData.push({
@@ -65,5 +65,5 @@ Example
         surname: 'Surname ' + i
       });
     }
-  
+
     $('#example').table().data( jsonData );
