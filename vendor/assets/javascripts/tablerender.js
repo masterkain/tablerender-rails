@@ -1319,86 +1319,44 @@
         $(row).attr('style', style);
       }
 
-      // $(row).html('')
-      //   .css('top', (index * (options.rowHeight + options.borderHeight)))
-      //   .css('height', options.rowHeight);
+      row = $(options.rowRender(row, datum, self.columns(), index))[0];
+
       $(row).html('').css({
         'top': (index * (options.rowHeight + options.borderHeight)),
         'height': options.rowHeight
       });
 
-        row = $(options.rowRender(row, datum, self.columns(), index))[0];
-
-        // if (row) {
-        //   for (var c = 0, l = options.columns.length; c < l; c++) {
-        //     var column = options.columns[c];
-        //     // call column render function
-        //     var col = $(options.colRender(c, column.key, datum[column.key], index, datum, options.colCss, row))[0];
-        //     col && row.appendChild(col); // faster than jQuery functions
-        //   }
-        // }
-        if ( row ) {
-          $(row).addClass('table_row');
-        }
-        return row;
+      if ( row ) {
+        $(row).addClass('table_row');
       }
-
-      /**
-       * Renders single row
-       * This method can be overwritten using 'options.rowRender'
-       */
-      function _rowRender(row, datum, columns, index) {
-        // Faster than jQuery functions
-
-        var cols = columns;
-        $.each(cols, function(i, col){
-          var el = document.createElement('div');
-          el.id = "row_" + index + "_column_" + col.key;
-          el.innerHTML = datum[ col.key ];
-          $(el).addClass("column col_" + i);
-          if ( col.hidden ){
-            $(el).addClass('column_hidden');
-          }
-          $(row).append( el );
-        });
-
-        if (row) {
-          $(row).addClass('table_row');
-        }
-        return $(row); // browser compatibility; return a jQuery object
-      }
+      return row;
+    }
 
     /**
-     * Draw row at the specified position
-     */
-    // function redrawRow(index) {
-    //   var row;
-    //   if ((row = _shownData[index]) === undefined)
-    //     return; // no row to redraw was found
-    //   var newTop = (index * (options.rowHeight + options.borderHeight)); // calculate new row position
-    //   if (row.offsetTop != newTop) {
-    //     if (options.animate) {
-    //       $(row).animate({
-    //         top: newTop
-    //       });
-    //     } else {
-    //       row.style.top = newTop + 'px'; // set new position ( faster than jQuery function )
-    //     }
-    //   }
-    //   return row;
-    // }
-
-    /**
-     * Renders single column
+     * Renders single row
      * This method can be overwritten using 'options.rowRender'
      */
-    // function _columnRender(index, key, text, i_row, datum, css, row) {
-    //   // Faster than jQuery functions
-    //   var col = document.createElement('div');
-    //   col.className = 'column col_' + index + ' ' + (css || '');
-    //   col.innerHTML = text;
-    //   return $(col);
-    // }
+    function _rowRender(row, datum, columns, index) {
+      // Faster than jQuery functions
+
+      var cols = columns;
+      $.each(cols, function(i, col){
+        var el = document.createElement('div');
+        el.id = "row_" + index + "_column_" + col.key;
+        el.innerHTML = datum[ col.key ];
+        $(el).addClass("column col_" + i);
+        if ( col.hidden ){
+          $(el).addClass('column_hidden');
+        }
+        $(row).append( el );
+      });
+
+      if (row) {
+        $(row).addClass('table_row');
+      }
+      return $(row); // browser compatibility; return a jQuery object
+    }
+
     /**
      * Renders the table header
      * This method can be overwritten using 'options.rowRender'
@@ -1414,6 +1372,8 @@
     function canBeSorted() {
       return true;
     }
+
+
 
 
 
