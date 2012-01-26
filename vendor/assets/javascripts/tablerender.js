@@ -153,42 +153,27 @@
     this.addColumn = function (columnData, index) {
       index = typeof index == 'number' ? index : _columns.length;
 
-      var c = $(options.headRender(index, columnData))[0];
+      if ((index >= _columns.length) || (_columns[index] === undefined || _columns[index] === null)
 
-      if (c) {
-        $(c).css('float', 'left');
-        columnData._html_ = c;
+      ) {
+        // We are adding a column in an empty position.
+        // So, we have to replace the existing undefined object with the new column data
+        _columns[index] = columnData;
 
-        if ((index >= _columns.length) || (_columns[index] === undefined || _columns[index] === null)
-
-        ) {
-          // We are adding a column in an empty position.
-          // So, we have to replace the existing undefined object with the new column data
-          _columns[index] = columnData;
-
-        } else {
-          // Add a column into an already non-empty position.
-          _columns.splice(index, 0, columnData);
-        }
-
-        // store column object into collection
-        if (options.sortable) {
-          $(c).bind('click', function (e) {
-            self.sort(i, true); // bind the sortable event
-          });
-        }
-
-
-        if (_header_drawn) {
-          // Redraw header
-          this.drawHeader();
-        }
-
-        // TODO: do we have to redraw the body of the table?
-        _showData(true);
-
-        $self.trigger('add_column', [columnData, index]);
+      } else {
+        // Add a column into an already non-empty position.
+        _columns.splice(index, 0, columnData);
       }
+
+      if (_header_drawn) {
+        // Redraw header
+        this.drawHeader();
+      }
+
+      // TODO: do we have to redraw the body of the table?
+      _refreshViewPort();
+
+      $self.trigger('add_column', [columnData, index]);
     };
 
 
@@ -226,7 +211,7 @@
       }
 
       // TODO: do we have to redraw the body of the table?
-      _showData(true);
+      _refreshViewPort();
 
       $self.trigger('remove_column', [col_data, col_index]);
 
@@ -242,14 +227,21 @@
 
       $.each( this.columns(), function (i, item) {
 
-        var element = $(item._html_);
+        var element = $(options.headRender(i, item));
+
         if (element.length) {
+          element.css('float', 'left');
           if (item.hidden) {
             element.addClass('column_hidden');
           } else {
             element.removeClass('column_hidden');
           }
           $(element).appendTo(head);
+          if (options.sortable) {
+            $(element).bind('click', function (e) {
+              self.sort(i, true); // bind the sortable event
+            });
+          }
         }
 
       });
@@ -902,7 +894,7 @@
       }
 
       // TODO: do we have to redraw the body of the table?
-      _showData(true);
+      _refreshViewPort();
 
 
       $self.trigger(((show ? 'show' : 'hide') + '_column'), [_columns[col_index], col_index]);
@@ -1237,6 +1229,12 @@
       _waiting = false;
       //}, 1000);
       body.removeClass('loading');
+    }
+
+
+
+    function _refreshViewPort(){
+      renderTable(_viewPort.from, _viewPort.to);
     }
 
     /**
