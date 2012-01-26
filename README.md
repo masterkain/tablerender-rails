@@ -1,70 +1,69 @@
 TableRender is a jQuery based plugin.
-(this is a beta version)
-========================================
 
-How can I render a table with too much data?
-TableRender is a jQuery based plugin that parses and creates more than 100,000 table rows just in time.
+_How can I render a table with too much data?_
 
-Given a json object, TableRender parses, renders, filters and sorts all data.
-Monipulation methods are included:
-  addRow, addRows
-  removeRow, removeRows
-  replaceRow, replaceRows
-  search,
-  filter
-  sort
+TableRender is a jQuery-based plugin that parses and creates more than 100.000 table rows just in time.
 
-Browser supported: 
-  IE6 (maybe - not tested),
-  IE7,
-  IE8,
-  IE9 (maybe - not tested)
-  Firefox 3,4,5
-  Chrome
-  Safari
-  Opera
+Given a JSON object, TableRender parses, renders, filters and sorts all data.
 
-Requirements
-  jQuery 1.4.2 or later
-  IntroSort script (used while sorting)
+Methods:
+
+  * `addRow`, `addRows`
+  * `removeRow`, `removeRows`
+  * `replaceRow`, replaceRows`
+  * `search`
+  * `filter`
+  * `sort`
+
+Supported browsers:
+
+  * Internet Explorer 6 (not tested)
+  * Internet Explorer 7
+  * Internet Explorer 8
+  * Internet Explorer 9
+  * Firefox
+  * Google Chrome
+  * Safari
+  * Opera
+
+Requirements:
+
+  * jQuery 1.4.2 or later
+  * IntroSort script (used while sorting)
 
 Example
 
-  $('#example').table({
-    columns: [
-      {
-        key: 'title',
-        label: 'Title'
-      },{
-        key: 'name',
-        label: 'Name'
-      },{
-        key: 'surname',
-        label: 'Surname'
+    $('#example').table({
+      columns: [
+        {
+          key: 'title',
+          label: 'Title'
+        },{
+          key: 'name',
+          label: 'Name'
+        },{
+          key: 'surname',
+          label: 'Surname'
+        }
+      ],
+      rowHeight: 20,
+      headHeight: 20,
+      borderHeight: 0,
+      sortable: false,
+      selection: true,
+      multiselection: true,
+      canBeSorted: function(column){
+        return column != 3
       }
-    ],
-    rowHeight: 20,
-    headHeight: 20,
-    borderHeight: 0,
-    sortable: false,
-    selection: true,
-    multiselection: true,
-    canBeSorted: function(column){
-      return column != 3
-    }
-  });
-  
-  
-  
-  var jsonData = [];
-  for ( var i=0; i < 100000; i++ ) {
-    jsonData.push({
-      title: 'Title ' + i,
-      name: 'Name ' + i,
-      surname: 'Surname ' + i
     });
-  }
-  
-  $('#example').table().data( jsonData );
 
+    var jsonData = [];
+    for ( var i=0; i < 100000; i++ ) {
+      jsonData.push({
+        title: 'Title ' + i,
+        name: 'Name ' + i,
+        surname: 'Surname ' + i
+      });
+    }
 
+    $('#example').table().data( jsonData );
