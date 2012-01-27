@@ -141,6 +141,13 @@
      */
 
 
+     /**
+      * This method returns 'this' instance class
+      */
+     this._instance = function(){
+       return this;
+     };
+
     this.option = function (name, value) {
       if (value === undefined || value === null) {
         return options[name];
