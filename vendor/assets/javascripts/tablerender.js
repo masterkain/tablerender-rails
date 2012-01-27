@@ -1246,7 +1246,14 @@
 
 
     function _refreshViewPort(){
-      renderTable(_viewPort.from, _viewPort.to);
+      var
+        from = _viewPort.from,
+        to = _viewPort.to,
+        total = to - from;
+
+      Array.prototype.splice.call( _shownData, [ from, total ].concat( new Array(total) ) );
+      body[0].innerHTML = '';
+      renderTable(from, to);
     }
 
     /**
@@ -1299,7 +1306,7 @@
      */
     function renderTable(from, to) {
       for (var i = from; i <= to && _currentData[i]; i++) {
-        var row = renderRow(i);
+        var row = (_shownData[i] === undefined) ? renderRow(i) : redrawRow(i);
 
         if (row && (!row.parentNode || row.parentNode !== body[0])) {
           var older_row = _shownData[i];
@@ -1351,6 +1358,27 @@
         'height': options.rowHeight
       });
 
+      return row;
+    }
+
+
+    /**
+     * Draw row at the specified position
+     */
+    function redrawRow(index) {
+      var row;
+      if ((row = _shownData[index]) === undefined)
+        return; // no row to redraw was found
+      var newTop = (index * (options.rowHeight + options.borderHeight)); // calculate new row position
+      if (row.offsetTop != newTop) {
+        if (options.animate) {
+          $(row).animate({
+            top: newTop
+          });
+        } else {
+          row.style.top = newTop + 'px'; // set new position ( faster than jQuery function )
+        }
+      }
       return row;
     }
 
