@@ -278,6 +278,11 @@
 
 
     this.columns = function (columns) {
+      if ( typeof columns == 'object' ){
+        _columns = columns;
+        this.drawHeader();
+        _refreshViewPort();
+      }
       return $.map(_columns.slice(0), function (col, index) {
         if (col) {
           return col;
