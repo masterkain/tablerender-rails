@@ -243,17 +243,12 @@
         head.replaceWith( new_head );
         head = $(new_head);
       } else {
+        var cols = this.columns();
+        $.each( cols, function (i, item) {
 
-        $.each( this.columns(), function (i, item) {
-
-          var element = $(options.columnRender(i, item));
+          var element = $(options.columnRender(i, item, cols));
 
           if (element.length) {
-            if (item.hidden) {
-              element.addClass('column_hidden');
-            } else {
-              element.removeClass('column_hidden');
-            }
             $(element).appendTo(head);
             if (options.sortable) {
               $(element).bind('click', function (e) {
@@ -1424,7 +1419,13 @@
      * This method can be overwritten using 'options.rowRender'
      */
     function headRender(index, columnData, columns) {
-      return $('<div style="float:left;" class="column col_' + index + ' col_' + columnData.key + '" >' + columnData.label + '</div>');
+      var el = $('<div style="float:left;" class="column col_' + index + ' col_' + columnData.key + '" >' + columnData.label + '</div>');
+      if (columnData.hidden) {
+        el.addClass('column_hidden');
+      } else {
+        el.removeClass('column_hidden');
+      }
+      return el;
     }
 
     /**
