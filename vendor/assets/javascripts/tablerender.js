@@ -941,14 +941,14 @@
 
       for (var i = 0, l = data.length; i < l; i++) {
         var found = false;
-        for (var c = 0, lc = options.columns.length; c < lc; c++) {
+        for (var c = 0, lc = _columns.length; c < lc; c++) {
           if (attachIndex) {
             data[i]._original_index = i; // store original index
           }
-          var str = data[i][options.columns[c].key];
+          var str = data[i][ _columns[c].key ];
           if (("" + str).toLowerCase().indexOf(query) != -1) {
             result.indexes.push(i);
-            var currentIndex = result.data.push(data[i]);
+            var currentIndex = result.data.push( data[i] );
             if (attachIndex) {
               data[i]._current_index = (currentIndex - 1);
             }
@@ -1326,13 +1326,13 @@
           }
           _shownData[i] = row;
         }
-        (function (_row, _index) {
-          return setTimeout(function () {
-            if ($.inArray(_index, _selectedIndexes) > -1) {
-              $self.trigger('rowSelection', [_index, _row, true, _currentData[_index]]);
-            }
-          }, 1);
-        })(row, i);
+        // (function (_row, _index) {
+        //   return setTimeout(function () {
+        //     if ($.inArray(_index, _selectedIndexes) > -1) {
+        //       $self.trigger('rowSelection', [_index, _row, true, _currentData[_index]]);
+        //     }
+        //   }, 1);
+        // })(row, i);
       }
     }
 
@@ -1345,20 +1345,8 @@
 
       var
       datum = _currentData[index],
-        style = 'position:absolute;left:0px;right:0px;';
-      row = _shownData[index];
 
-      if (!row) {
-        // No existing row found
-        // create a new one
-        row = document.createElement("div");
-        row.id = 'row_' + index;
-        $(row).attr('style', style);
-      }
-
-      $(row).html('');
-
-      row = $(options.rowRender(row, datum, self.columns(), index))[0];
+      row = $(options.rowRender(datum, self.columns(), index, $.inArray(index, _selectedIndexes) > -1))[0];
 
       $(row).css({
         'top': (index * (options.rowHeight + options.borderHeight)),
@@ -1393,8 +1381,11 @@
      * Renders single row
      * This method can be overwritten using 'options.rowRender'
      */
-    function _rowRender(row, datum, columns, index) {
+    function _rowRender(datum, columns, index, selected) {
       // Faster than jQuery functions
+
+      var row = document.createElement('div');
+      row.id = "row_" + index;
 
       var cols = columns;
       $.each(cols, function(i, col){
@@ -1409,7 +1400,10 @@
       });
 
       if (row) {
-        $(row).addClass('table_row');
+        $(row).attr('style', "position:absolute;left:0px;right:0px;").addClass('table_row');
+        if ( selected ){
+          $(row).addClass("selected");
+        }
       }
       return $(row); // browser compatibility; return a jQuery object
     }
