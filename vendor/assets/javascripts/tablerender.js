@@ -7,7 +7,10 @@
    * @param opts the initial options
    * @return TableRender instance
    */
-  function TableRender(obj, opts) {
+  window.TableRender = function(element, opts) {
+
+    var obj = element;
+    $(element).data("_tablerender", this);
 
     this.version = VERSION;
 
@@ -140,13 +143,6 @@
      * PUBLIC METHODS
      */
 
-
-     /**
-      * This method returns 'this' instance class
-      */
-     this._instance = function(){
-       return this;
-     };
 
     this.option = function (name, value) {
       if (value === undefined || value === null) {
@@ -1460,7 +1456,6 @@
     var klass = $(element).data("_tablerender");
     if (!klass) {
       klass = new TableRender(element, typeof opt == 'object' ? opt : {});
-      $(element).data("_tablerender", klass);
     } else {
       var
       action = _arguments[0],
@@ -1468,9 +1463,11 @@
 
       if (klass[action] && klass[action].apply) {
         return klass[action].apply(klass, args);
+      } else {
+        return null
       }
     }
-    return klass;
+    return this;
   };
 
 
