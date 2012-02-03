@@ -1439,7 +1439,7 @@
 
     if (options.selection) {
       // bind the selection event
-      body.delegate('div.row', 'click', rowSelection);
+      body.delegate('div.' + options.rowCss, 'click', rowSelection);
     }
 
 
