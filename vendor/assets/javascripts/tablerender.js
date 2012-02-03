@@ -22,7 +22,7 @@
       // String:    table body stylesheet class
       bodyCss: '',
 
-      rowCss: 'row'
+      rowCss: 'row',
 
       // Array:     columns list ( ie:  [ { key: 'key', label: 'label', hidden: false}, { key: 'key', label: 'label', hidden: true} ]   )
       columns: [],
