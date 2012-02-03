@@ -22,6 +22,8 @@
       // String:    table body stylesheet class
       bodyCss: '',
 
+      rowCss: 'row'
+
       // Array:     columns list ( ie:  [ { key: 'key', label: 'label', hidden: false}, { key: 'key', label: 'label', hidden: true} ]   )
       columns: [],
 
@@ -830,7 +832,7 @@
      * Adds event to each row
      */
     this.addRowsEvent = function (type, fn) {
-      body.delegate('div.row', type, fn);
+      body.delegate('div.' + options.rowCss, type, fn);
       return self;
     };
 
@@ -854,7 +856,7 @@
      * Removes event from table rows
      */
     this.removeRowsEvent = function (type, fn) {
-      body.undelegate('div.row', type, fn);
+      body.undelegate('div.' + options.rowCss, type, fn);
       return self;
     };
 
@@ -1396,7 +1398,7 @@
       });
 
       if (row) {
-        $(row).attr('style', "position:absolute;left:0px;right:0px;").addClass('table_row');
+        $(row).attr('style', "position:absolute;left:0px;right:0px;").addClass(options.rowCss);
         if ( selected ){
           $(row).addClass("selected");
         }
