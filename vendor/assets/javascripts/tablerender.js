@@ -103,10 +103,10 @@
       _waiting = false,
 
       // collection that contains all rows data
-      _data = [],
+      _data = TAFFY(),
 
       // collection that contains all rows data currently filtered
-      _currentData = [],
+      _currentData = _data,
 
       // collection that contains all rendered rows as HTML object
       _shownData = [],
@@ -299,16 +299,16 @@
      * If not arguments passed, this method returns the entire collection data
      */
     this.data = function (data) {
-      if (data === undefined) return _data;
+      if (data === undefined) return _data().get();
 
       this.clearSelection();
-      _data = _currentData = [];
+      _data = _currentData = TAFFY([]);
 
       _queryText = undefined;
 
-      _data = _currentData = data;
+      _data = _currentData = TAFFY(data);
 
-      showData(data);
+      showData( _data );
 
       $self.trigger('newData', [data]);
     };
@@ -317,14 +317,14 @@
      * Returns the row data at the specified position
      */
     this.currentDataAt = function (index) {
-      return _currentData[index];
+      return _currentData().get()[index];
     };
 
     /**
      * Resizes the table
      */
     this.resize = function () {
-      var _height = _currentData.length * (options.rowHeight + options.borderHeight); // calculate maximum height
+      var _height = _currentData().count() * (options.rowHeight + options.borderHeight); // calculate maximum height
       body.css('height', _height); // set height to body
       newViewPort();
 
@@ -355,7 +355,7 @@
      * Returns the data row object at the specified position
      */
     this.dataAt = function (index) {
-      return _data[index];
+      return _data().get()[index];
     };
 
 
@@ -365,7 +365,7 @@
      */
     this.rowToData = function (row) {
       var index = this.rowToIndex(row);
-      return _data[index];
+      return _data().get()[index];
     };
 
     /**
@@ -391,13 +391,13 @@
       if (!options.multiselection) this.clearSelection();
 
       var
-      currentIndex = originalIndexToCurrentIndex(index),
+        currentIndex = originalIndexToCurrentIndex(index),
         viewPort = getViewPort();
 
       selectRow(currentIndex);
       if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
         var row = this.rowAt(index);
-        $self.trigger('rowSelection', [index, row, true, _currentData[currentIndex]]);
+        $self.trigger('rowSelection', [index, row, true, _currentData().get()[currentIndex]]);
       }
       return this;
     };
@@ -410,14 +410,14 @@
       if (!options.selection) return;
 
       var
-      row = this.rowAt(index);
-      currentIndex = originalIndexToCurrentIndex(index);
+        row = this.rowAt(index);
+        currentIndex = originalIndexToCurrentIndex(index);
 
       unselectRow(currentIndex);
 
       if (currentIndex >= viewPort.from && currentIndex <= viewPort.to) {
         // row = this.rowAt(index);
-        $self.trigger('rowSelection', [index, row, false, _currentData[currentIndex]]);
+        $self.trigger('rowSelection', [index, row, false, _currentData().get()[currentIndex]]);
       }
 
       return this;
@@ -427,7 +427,8 @@
      * Marks all row as unselected
      */
     this.clearSelection = function () {
-      var indexes = selectedIndexes(),
+      var
+        indexes = selectedIndexes(),
         viewPort = getViewPort();
       _selectedIndexes = [];
       for (var i = indexes.length - 1; i >= 0; i--) {
@@ -435,7 +436,7 @@
         if (index >= viewPort.from && index <= viewPort.to) {
           unselectRow(indexes[i]);
           var row = this.rowAt(index);
-          $self.trigger('rowSelection', [index, row, false, _currentData[index]]);
+          $self.trigger('rowSelection', [index, row, false, _currentData().get()[index]]);
         }
       }
     };
@@ -444,7 +445,8 @@
      * Returns all selected row indexes
      */
     this.selectedIndexes = function () {
-      var indexes = _selectedIndexes,
+      var
+        indexes = _selectedIndexes,
         result = [];
       for (var i = 0, l = indexes.length; i < l; i++)
       result.push(currentIndexToOriginalIndex(indexes[i]));
@@ -456,10 +458,11 @@
      * Returns all selected row data
      */
     this.selectedData = function () {
-      var indexes = this.selectedIndexes(),
+      var
+        indexes = this.selectedIndexes(),
         result = [];
       for (var i = 0, l = indexes.length; i < l; i++)
-      result.push(_data[indexes[i]]);
+      result.push(_data().get()[indexes[i]]);
       return result;
     };
 
@@ -475,7 +478,7 @@
      * Returns the last selected row data
      */
     this.lastSelectedData = function () {
-      return _data[this.lastSelectedIndex()];
+      return _data().get()[this.lastSelectedIndex()];
     };
 
 
@@ -486,8 +489,8 @@
 
       index = originalIndexToCurrentIndex(index);
       var
-      // calculate row position
-      pos = (index * (options.rowHeight + options.borderHeight)),
+        // calculate row position
+        pos = (index * (options.rowHeight + options.borderHeight)),
         // current scroll position
         scrollTop = body_container[0].scrollTop,
         _height = body_container[0].offsetHeight,
@@ -531,7 +534,7 @@
       if (_asc[0] == col) {
         asc = !_asc[1]; // get ascendent/descendent flag
       } //else {
-      _currentData = $.introSort(_currentData, function (aRow, bRow) {
+      var _tmp_data = $.introSort(_currentData().get(), function (aRow, bRow) {
         var aDatum = aRow[column.key],
           bDatum = bRow[column.key];
         if (ignoreCase && (typeof aDatum == 'string')) {
@@ -548,6 +551,8 @@
         datum1._current_index = index1;
         datum2._current_index = index2;
       });
+
+      _currentData = TAFFY( _tmp_data );
 
       // empties older selected rows
       _selectedIndexes = [];
@@ -590,7 +595,7 @@
       _queryText = text;
 
       if (!text) {
-        return this.data(this.data());
+        return this.data( this.data() );
       }
 
       this.clearSelection();
@@ -1112,7 +1117,7 @@
      */
     function currentIndexToOriginalIndex(index) {
       if (!isFiltered()) return index;
-      var datum = _currentData[index];
+      var datum = _currentData().get()[index];
       if (datum._original_index === undefined) return index;
       return datum._original_index;
     }
@@ -1122,7 +1127,7 @@
      */
     function originalIndexToCurrentIndex(index) {
       if (!isFiltered()) return index;
-      var datum = _data[index];
+      var datum = _data().get()[index];
       if (datum._current_index === undefined) return index;
       return datum._current_index;
     }
@@ -1230,7 +1235,7 @@
       _waiting = true;
 
       _currentData = data;
-      _shownData = new Array(data.length);
+      _shownData = new Array(data().count().length);
 
       body_container[0].scrollTop = 0;
 
@@ -1312,7 +1317,8 @@
      * Builds table
      */
     function renderTable(from, to) {
-      for (var i = from; i <= to && _currentData[i]; i++) {
+      var _tmp_data = _currentData().get();
+      for (var i = from; i <= to && _tmp_data[i]; i++) {
         var row = (_shownData[i] === undefined) ? renderRow(i) : redrawRow(i);
 
         if (row && (!row.parentNode || row.parentNode !== body[0])) {
@@ -1341,10 +1347,10 @@
      * Build single row
      */
     function renderRow(index) {
-      if (!_currentData[index]) return null;
+      if (!_currentData().get()[index]) return null;
 
       var
-      datum = _currentData[index],
+        datum = _currentData().get()[index],
 
       row = $(options.rowRender(datum, self.columns(), index, $.inArray(index, _selectedIndexes) > -1))[0];
 
