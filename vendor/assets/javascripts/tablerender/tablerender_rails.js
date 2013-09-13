@@ -720,6 +720,12 @@
           result[i]._current_index = _tmp_current_data.push( result[i] ) - 1;
         }
         _currentData = TAFFY( _tmp_current_data );
+
+      } else {
+
+        // Table is not filtered, so we should recalculare the currentData pointing to all data
+        // this fixes a render problem
+        _currentData = TAFFY( _tmp_data );
       }
 
       var viewPort = getViewPort();
@@ -785,7 +791,7 @@
 
       _data = TAFFY( _tmp_data );
 
-      if (removedRows.length && (isFiltered() || isQueried()) ) {
+      if (removedRows.length > 0 && (isFiltered() || isQueried()) ) {
         var result = isFiltered() ? filter(_queryText, removedRows).data : _query( _queryObject, removedRows);
         if (result.length) {
           var _tmp_current_data = _currentData().get();
@@ -800,6 +806,10 @@
         } else {
           redraw = false;
         }
+      } else if ( removedRows.length > 0 ) {
+        // Table has not been filtered, so we should reset currentData pointing to all data
+        // this fixes a render problem
+        _currentData = TAFFY( _tmp_data );
       }
 
       if (redraw) {
@@ -873,6 +883,11 @@
           row._original_index = removedRow[0]._original_index;
           //}
           redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
+
+        } else if ( index !== undefined ) {
+          // table has not been filtered. we should replace the currentData containing the replaced row
+          // this fixes a render problem
+          Array.prototype.splice.apply(_tmp_current_data, [index, 1, row]);
         }
       }
 
