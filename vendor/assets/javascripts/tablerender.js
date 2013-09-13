@@ -84,8 +84,8 @@
 
       $self = $(self); // shortcut to jQuery functions
     var
-    // Table header wrapper that contains all columns and scrollbar placeholder
-    header_container = $('<div class="table_header_container" style="position:absolute;top:0;left:0;right:0;height:' + options.headHeight + 'px;"></div>').appendTo(obj),
+      // Table header wrapper that contains all columns and scrollbar placeholder
+      header_container = $('<div class="table_header_container" style="position:absolute;top:0;left:0;right:0;height:' + options.headHeight + 'px;"></div>').appendTo(obj),
       // Table header that contains all columns
       head = $('<div class="table_head ' + options.headCss + '"></div>').appendTo(header_container),
       // Table body wrapper that contains the table rows container
@@ -97,8 +97,8 @@
 
 
     var
-    // True once header has been drawed
-    _header_drawn = false,
+      // True once header has been drawed
+      _header_drawn = false,
 
       _waiting = false,
 
@@ -122,6 +122,9 @@
 
       // Stores the query text used to filter collection rows
       _queryText,
+
+      // Stores the queryObject used to filter collection rows
+      _queryObject,
 
       // true if table is currently sorted
       _sorted = false,
@@ -304,13 +307,21 @@
       this.clearSelection();
       _data = _currentData = TAFFY([]);
 
-      _queryText = undefined;
+      _queryText = _queryObject = undefined;
 
-      _data = _currentData = TAFFY(data);
+      window.PIPPO = _data = TAFFY(data);
 
-      showData( _data );
+      showData( data );
 
       $self.trigger('newData', [data]);
+    };
+
+
+    /**
+     * This method returns current filtered data listed in table
+     */
+    this.currentShownData = function() {
+      return _currentData().get();
     };
 
     /**
@@ -575,14 +586,14 @@
      * Returns new filtered data objects
      */
     this.dataFilter = function (query) {
-      return filter(query, _data).data;
+      return filter(query, this.data() ).data;
     };
 
     /**
      * Returns new filtered data indexes
      */
     this.indexesFilter = function (query) {
-      return filter(query, _data).indexes;
+      return filter(query, this.data() ).indexes;
     };
 
     /**
@@ -598,14 +609,73 @@
         return this.data( this.data() );
       }
 
+      _queryObject = undefined;
+
       this.clearSelection();
 
-      var result = filter(text, _data, true);
+      var result = filter(text, this.data(), true);
 
       showData(result.data);
 
+      $self.trigger('searched', [result.data, text]); // fire event
+
       return result.data.length;
     };
+
+
+    this.query = function(queryObject) {
+
+      if ( queryObject == undefined || queryObject == null ) {
+        return this.data( this.data() );
+      }
+
+      _queryText = undefined;
+      this.clearSelection();
+
+      var data = this.data();
+      var result = [];
+      var keys = Object.keys(queryObject);
+      for( var i = 0, l = data.length; i < l; i++ ) {
+        var datum = data[ i ];
+
+        // set original_index to single datum
+        datum._original_index = i;
+
+        var match = 0;
+
+        for ( var ki = 0; ki < keys.length; ki++ ) {
+          var k = keys[ ki ];
+          var v = queryObject[ k ];
+          var colValue = datum[ k ];
+          if ( $.isArray( v ) ) {
+            for( var j = 0; j < v.length; j ++ ){
+              var single_col_value = v[j];
+              if ( single_col_value.toLowerCase() == colValue.toLowerCase() ) {
+                match++;
+                break;
+              }
+            }
+          } else {
+            if ( v.toLowerCase() == colValue.toLowerCase() ) {
+              match++;
+            }
+          }
+        }
+        if ( match ==  keys.length ) {
+          var currentIndex = result.push( datum );
+          datum._current_index = (currentIndex - 1);
+        } else {
+          datum._current_index = i;
+        }
+      }
+
+      _queryObject = queryObject;
+
+      showData( result );
+
+      return result.length;
+    };
+
 
     /*******************
      *    UTILITY
@@ -1140,6 +1210,13 @@
     }
 
     /**
+     * Returns true if shown data has been filtered by query
+     */
+    function isQueried() {
+      return (_queryObject !== undefined && _queryObject);
+    }
+
+    /**
      * Prevent bug:
      * jQuery.unique doesn't work fine with array of integers
      */
@@ -1234,8 +1311,8 @@
 
       _waiting = true;
 
-      _currentData = data;
-      _shownData = new Array(data().count().length);
+      _currentData = TAFFY(data);
+      _shownData = new Array(data.length);
 
       body_container[0].scrollTop = 0;
 
@@ -1357,7 +1434,7 @@
       $(row).css({
         'top': (index * (options.rowHeight + options.borderHeight)),
         'height': options.rowHeight
-      });
+      }).data("tablerender-id", datum.___id);
 
       return row;
     }
@@ -1461,7 +1538,6 @@
    */
   $.fn.tablerender = function (opt) {
     var _arguments = Array.prototype.slice.call(arguments, 0);
-    // Instanciates new TableRender class
     var element = this[0];
     var klass = $(element).data("_tablerender");
     if (!klass) {
@@ -1474,7 +1550,7 @@
       if (klass[action] && klass[action].apply) {
         return klass[action].apply(klass, args);
       } else {
-        return null
+        return null;
       }
     }
     return this;
