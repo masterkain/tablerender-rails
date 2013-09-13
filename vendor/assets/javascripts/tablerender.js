@@ -296,6 +296,10 @@
     };
 
 
+    this.getDBData = function() {
+      return TAFFY( _data().get() )();
+    }
+
 
     /**
      * Use this method to set new collection data.
@@ -546,7 +550,8 @@
         asc = !_asc[1]; // get ascendent/descendent flag
       } //else {
       var _tmp_data = $.introSort(_currentData().get(), function (aRow, bRow) {
-        var aDatum = aRow[column.key],
+        var
+          aDatum = aRow[column.key],
           bDatum = bRow[column.key];
         if (ignoreCase && (typeof aDatum == 'string')) {
           // transform into lower case if ignoreCase flag is true
@@ -632,48 +637,12 @@
       _queryText = undefined;
       this.clearSelection();
 
-      var data = this.data();
-      var result = [];
-      var keys = Object.keys(queryObject);
-      for( var i = 0, l = data.length; i < l; i++ ) {
-        var datum = data[ i ];
-
-        // set original_index to single datum
-        datum._original_index = i;
-
-        var match = 0;
-
-        for ( var ki = 0; ki < keys.length; ki++ ) {
-          var k = keys[ ki ];
-          var v = queryObject[ k ];
-          var colValue = datum[ k ];
-          if ( $.isArray( v ) ) {
-            for( var j = 0; j < v.length; j ++ ){
-              var single_col_value = v[j];
-              if ( single_col_value.toLowerCase() == colValue.toLowerCase() ) {
-                match++;
-                break;
-              }
-            }
-          } else {
-            if ( v.toLowerCase() == colValue.toLowerCase() ) {
-              match++;
-            }
-          }
-        }
-        if ( match ==  keys.length ) {
-          var currentIndex = result.push( datum );
-          datum._current_index = (currentIndex - 1);
-        } else {
-          datum._current_index = i;
-        }
-      }
-
       _queryObject = queryObject;
 
-      showData( result );
+      var data = _query( queryObject, _data().get(), true );
+      showData( data );
 
-      return result.length;
+      return data.length;
     };
 
 
@@ -713,9 +682,10 @@
      */
     this.addRows = function (position /*, rows ... */ ) {
       var rows = Array.prototype.slice.call(arguments, 0);
+      var _tmp_data = _data().get();
 
       if (isNaN(position)) {
-        position = _data.length;
+        position = _tmp_data.length;
       } else {
         rows.splice(0, 1);
       }
@@ -733,17 +703,23 @@
        * Add new row to collection
        * It should be:  _data.splice( position, 0, rows... )
        */
-      Array.prototype.splice.apply(_data, args);
+
+      Array.prototype.splice.apply( _tmp_data, args );
+
+      _data = TAFFY( _tmp_data );
 
 
       var positionToRedraw = position;
-      if (isFiltered()) {
-        positionToRedraw = _currentData.length;
-        var result = filter(_queryText, rows);
-        for (var i = 0, l = result.data.length; i < l; i++) {
-          result.data[i]._original_index = position + i;
-          result.data[i]._current_index = _currentData.push(result.data[i]) - 1;
+      if ( isFiltered() || isQueried() ) {
+        var _tmp_current_data = _currentData().get();
+        positionToRedraw = _tmp_current_data.length;
+        var result = isFiltered() ? filter(_queryText, rows).data : _query( _queryObject, rows);
+
+        for (var i = 0, l = result.length; i < l; i++) {
+          result[i]._original_index = position + i;
+          result[i]._current_index = _tmp_current_data.push( result[i] ) - 1;
         }
+        _currentData = TAFFY( _tmp_current_data );
       }
 
       var viewPort = getViewPort();
@@ -774,7 +750,7 @@
     this.removeRows = function ( /*position ... */ ) {
 
       var
-      indexes = Array.prototype.slice.call(arguments, 0),
+        indexes = Array.prototype.slice.call(arguments, 0),
         removedRows = [],
         viewPort = getViewPort(),
         redraw = false;
@@ -784,12 +760,12 @@
         return a < b;
       });
 
-
+      var _tmp_data = _data().get();
       for (var i = 0, j = 0, l = indexes.length, b, c, num = 1; i < l; i++) {
         b = indexes[i];
         c = indexes[i + 1];
 
-        $self.trigger('removeData', [b, _data[b]]); // fire event on single row
+        $self.trigger('removeData', [b, _tmp_data[b]]); // fire event on single row
         redraw = (b >= viewPort.from && b <= viewPort.to);
 
         unselectRowOnRemoveRow(b);
@@ -800,23 +776,27 @@
           continue;
         }
 
-        var removed = Array.prototype.splice.apply(_data, [indexes[j + (num - 1)], num]);
+        var removed = Array.prototype.splice.apply(_tmp_data, [indexes[j + (num - 1)], num]);
         removedRows = removedRows.concat(removed);
 
         j = i + 1;
         num = 1;
       }
 
-      if (removedRows.length && isFiltered()) {
-        var result = filter(_queryText, removedRows);
-        if (result.data.length) {
-          for (var i = result.data.length - 1; i >= 0; i--) {
-            var datum = result.data[i];
+      _data = TAFFY( _tmp_data );
+
+      if (removedRows.length && (isFiltered() || isQueried()) ) {
+        var result = isFiltered() ? filter(_queryText, removedRows).data : _query( _queryObject, removedRows);
+        if (result.length) {
+          var _tmp_current_data = _currentData().get();
+          for (var i = result.length - 1; i >= 0; i--) {
+            var datum = result[i];
             if (datum._current_index === undefined) continue;
-            Array.prototype.splice.apply(_currentData, [datum._current_index, 1]);
+            Array.prototype.splice.apply(_tmp_current_data, [datum._current_index, 1]);
 
             redraw = redraw || (datum._current_index >= viewPort.from && datum._current_index <= viewPort.to);
           }
+          _currentData = TAFFY( _tmp_current_data );
         } else {
           redraw = false;
         }
@@ -830,7 +810,6 @@
       }
 
       return this;
-
     };
 
     /**
@@ -848,38 +827,46 @@
      */
     this.replaceRows = function ( /* [position, row] ... */ ) {
 
-      var args = Array.prototype.slice.call(arguments, 0),
-        redraw = false;
-      viewPort = getViewPort();
+      var
+        args = Array.prototype.slice.call(arguments, 0),
+        redraw = false,
+        viewPort = getViewPort(),
+        _tmp_data = _data().get(),
+        _tmp_current_data = _currentData().get();
+
 
       for (var i_arg = 0, l_arg = args.length; i_arg < l_arg; i_arg++) {
         var
-        arg = args[i_arg],
+          arg = args[i_arg],
           position = arg[0],
           row = arg[1],
           index = position;
 
-        $self.trigger('replaceData', [position, _data[position], row]);
+        $self.trigger('replaceData', [position, _tmp_data[position], row]);
 
         redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
 
-        var removedRow = Array.prototype.splice.apply(_data, [index, 1, row]);
+        var removedRow = Array.prototype.splice.apply(_tmp_data, [index, 1, row]);
 
-        index = !isFiltered() ? index : (function () {
-          if (filter(_queryText, [removedRow[0]], false).data.length) return removedRow[0]._current_index;
-          else return undefined;
+        index = ! ( isFiltered() || isQueried() ) ? index : (function() {
+          var result = isFiltered() ? filter(_queryText, [removedRow[0]]).data : _query( _queryObject, [removedRow[0]]);
+          if ( result.length ) {
+              return removedRow[0]._current_index;
+           } else {
+              return undefined;
+           }
         })();
 
-        if (index !== undefined && isFiltered()) {
+        if (index !== undefined && ( isFiltered() || isQueried() ) ) {
 
           /*
-              if (filter(_queryText, [row]).data.length) {
-                row._original_index = position;
-                row._current_index = index;
-                Array.prototype.splice.apply(_currentData, [index, 1, row]);
-              } else {
-            */
-          Array.prototype.splice.apply(_currentData, [index, 1, row]);
+            if (filter(_queryText, [row]).data.length) {
+              row._original_index = position;
+              row._current_index = index;
+              Array.prototype.splice.apply(_currentData, [index, 1, row]);
+            } else {
+           */
+          Array.prototype.splice.apply(_tmp_current_data, [index, 1, row]);
 
           // Restore index correctly
           row._current_index = removedRow[0]._current_index;
@@ -888,6 +875,9 @@
           redraw = redraw || (index >= viewPort.from && index <= viewPort.to);
         }
       }
+
+      _data = TAFFY( _tmp_data );
+      _currentData = TAFFY( _tmp_current_data );
 
       if (redraw) {
         this.resize();
@@ -1036,6 +1026,48 @@
       return result;
     }
 
+
+
+    function _query(queryObject, data, attachIndex) {
+      var result = [];
+      var keys = Object.keys(queryObject);
+      for( var i = 0, l = data.length; i < l; i++ ) {
+        var datum = data[ i ];
+
+        // set original_index to single datum
+        datum._original_index = i;
+
+        var match = 0;
+
+        for ( var ki = 0; ki < keys.length; ki++ ) {
+          var k = keys[ ki ];
+          var v = queryObject[ k ];
+          var colValue = datum[ k ];
+          if ( $.isArray( v ) ) {
+            for( var j = 0; j < v.length; j ++ ){
+              var single_col_value = v[j];
+              if ( single_col_value.toLowerCase() == colValue.toLowerCase() ) {
+                match++;
+                break;
+              }
+            }
+          } else {
+            if ( v.toLowerCase() == colValue.toLowerCase() ) {
+              match++;
+            }
+          }
+        }
+        if ( match ==  keys.length ) {
+          var currentIndex = result.push( datum );
+          attachIndex && ( datum._current_index = (currentIndex - 1) );
+        } else if ( attachIndex ) {
+          datum._current_index = i;
+        }
+      }
+      return result
+    }
+
+
     /******************
      *    SELECTION
      ******************/
@@ -1045,36 +1077,40 @@
      */
     function rowSelection(e) {
       var
-      // get current HTML row object
-      currentRow = this,
+        // get current HTML row object
+        currentRow = this,
         // get current HTML row index
         index = currentRow.offsetTop / (options.rowHeight + options.borderHeight);
 
-      if (!options.multiselection)
-      // mark all other selected row as unselected
-      self.clearSelection();
+      if (!options.multiselection) {
+        // mark all other selected row as unselected
+        self.clearSelection();
+      }
 
 
-      if (!(e.shiftKey || e.metaKey || e.ctrlKey))
-      // clear selected row
-      self.clearSelection();
+      if (!(e.shiftKey || e.metaKey || e.ctrlKey)) {
+        // clear selected row
+        self.clearSelection();
+      }
+
+      var _tmp_current_data = _currentData().get();
 
       if (e.shiftKey && options.multiselection) {
         // Shift is pressed
         var
-        _lastSelectedIndex = lastSelectedIndex(),
+          _lastSelectedIndex = lastSelectedIndex(),
           // get last selected index
           from = Math.min(_lastSelectedIndex + 1, index),
           to = Math.max(_lastSelectedIndex, index),
           viewPort = getViewPort();
 
         // select all rows between interval
-        for (var i = from; i <= to && _currentData[i]; i++) {
+        for (var i = from; i <= to && _tmp_current_data[i]; i++) {
           if ($.inArray(i, selectedIndexes()) == -1) {
             selectRow(i);
             if (i >= viewPort.from && i <= viewPort.to) {
               var row = self.rowAt(i);
-              $self.trigger('rowSelection', [i, row, true, _currentData[i]]);
+              $self.trigger('rowSelection', [i, row, true, _tmp_current_data[i]]);
             }
           }
         }
@@ -1084,16 +1120,16 @@
         // toggle selection
         if ($.inArray(index, selectedIndexes()) > -1) {
           unselectRow(index);
-          $self.trigger('rowSelection', [index, this, false, _currentData[index]]);
+          $self.trigger('rowSelection', [index, this, false, _tmp_current_data[index]]);
         } else {
           selectRow(index);
-          $self.trigger('rowSelection', [index, this, true, _currentData[index]]);
+          $self.trigger('rowSelection', [index, this, true, _tmp_current_data[index]]);
         }
 
       } else {
         // simple click
         selectRow(index);
-        $self.trigger('rowSelection', [index, this, true, _currentData[index]]);
+        $self.trigger('rowSelection', [index, this, true, _tmp_current_data[index]]);
       }
 
     }
@@ -1116,7 +1152,7 @@
      * Adds the specified row index to selected row indexes collection
      */
     function selectRow(index) {
-      if (index === undefined || index < 0 || index >= _currentData.length) return;
+      if (index === undefined || index < 0 || index >= _currentData().count() ) return;
       selectedIndexes().push(index);
     }
 
@@ -1124,7 +1160,7 @@
      * Remove the specified row index from selected row indexes collection
      */
     function unselectRow(index) {
-      if (index === undefined || index < 0 || index >= _currentData.length) return;
+      if (index === undefined || index < 0 || index >= _currentData().count() ) return;
 
       var pos = $.inArray(index, selectedIndexes());
       if (pos == -1) return;
@@ -1141,26 +1177,27 @@
      */
     function unselectRowOnRemoveRow(index) {
       var pos = $.inArray(index, self.selectedIndexes());
+      var _tmp_data = _data().get();
       if (pos != -1) {
         if (isFiltered()) {
-          var result = filter(_queryText, [_data[index]]);
+          var result = filter(_queryText, [ _tmp_data[index] ] );
           if (result.data.length) {
             var datum = result.data[0];
             if (datum._current_index !== undefined) {
               unselectRow(datum._current_index);
               var row = self.rowAt(datum._current_index);
-              $self.trigger('rowSelection', [index, row, false, _currentData[datum._current_index]]);
+              $self.trigger('rowSelection', [index, row, false, _currentData().get()[datum._current_index]]);
             }
           }
         } else {
           unselectRow(index);
           var row = self.rowAt(index);
-          $self.trigger('rowSelection', [index, row, false, _currentData[index]]);
+          $self.trigger('rowSelection', [index, row, false, _currentData().get()[index]]);
         }
       }
 
       var currentIndex = !isFiltered() ? index : (function () {
-        var datum = _data[index];
+        var datum = _tmp_data[index];
         if (filter(_queryText, [datum]).data.length) return datum._current_index;
         else return undefined;
       })();
