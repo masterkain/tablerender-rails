@@ -1,3 +1,3 @@
 //= require ./introsort
 //= require ./taffydb
-//= require ./tablerender
+//= require ./tablerender_rails
