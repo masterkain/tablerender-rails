@@ -642,6 +642,8 @@
       var data = _query( queryObject, _data().get(), true );
       showData( data );
 
+      $self.trigger('queried', [data, queryObject]); // fire event
+
       return data.length;
     };
 
