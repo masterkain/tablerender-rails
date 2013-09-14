@@ -313,7 +313,7 @@
 
       _queryText = _queryObject = undefined;
 
-      window.PIPPO = _data = TAFFY(data);
+      _data = TAFFY(data);
 
       showData( data );
 
