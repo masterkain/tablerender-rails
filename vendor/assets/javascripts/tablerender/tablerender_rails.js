@@ -26,7 +26,10 @@
 
       overflow: 'overflow-y: scroll',
 
-      // Array:     columns list ( ie:  [ { key: 'key', label: 'label', hidden: false}, { key: 'key', label: 'label', hidden: true} ]   )
+      // This is the column key used as ID
+      id_key: undefined,
+
+      // Array:     columns list ( ie:  [ { key: 'key', label: 'label', hidden: false, id: true}, { key: 'key', label: 'label', hidden: true} ]   )
       columns: [],
 
       // int:       row height in pixel
@@ -263,6 +266,20 @@
         });
       }
 
+      if ( ! options.id_key ) {
+        var cols = this.columns();
+        $.each( cols, function (i, item) {
+          if ( item.id ) {
+            options.id_key = item.key;
+            // skip other cols
+            return false;
+          }
+        });
+        if ( ! options.id_key ) {
+          options.id_key = cols[0].key;
+        }
+      }
+
       return (_header_drawn = true);
     };
 
@@ -308,7 +325,13 @@
     this.data = function (data) {
       if (data === undefined) return _data().get();
 
-      this.clearSelection();
+      _reset_data( data );
+
+      $self.trigger('newData', [data]);
+    };
+
+    function _reset_data( data ) {
+      self.clearSelection();
       _data = _currentData = TAFFY([]);
 
       _queryText = _queryObject = undefined;
@@ -316,9 +339,7 @@
       _data = TAFFY(data);
 
       showData( data );
-
-      $self.trigger('newData', [data]);
-    };
+    }
 
 
     /**
@@ -601,6 +622,17 @@
       return filter(query, this.data() ).indexes;
     };
 
+
+    this.isShown = function(item) {
+      var filter = {};
+      filter[ options.id_key ] = item[ options.id_key ];
+      return _currentData( filter ).get().length > 0;
+    };
+
+
+    this.isFiltered = isFiltered;
+    this.isQueried = isQueried;
+
     /**
      * Searches given text in the collection
      * Returns new data collection length
@@ -611,7 +643,7 @@
       _queryText = text;
 
       if (!text) {
-        return this.data( this.data() );
+        return _reset_data( this.data() );
       }
 
       _queryObject = undefined;
@@ -631,7 +663,7 @@
     this.query = function(queryObject) {
 
       if ( queryObject == undefined || queryObject == null ) {
-        return this.data( this.data() );
+        return _reset_data( this.data() );
       }
 
       _queryText = undefined;
