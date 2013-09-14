@@ -315,7 +315,11 @@
 
     this.getDBData = function() {
       return TAFFY( _data().get() )();
-    }
+    };
+
+    this.getDBCurrentData = function() {
+      return TAFFY( _currentData().get() )();
+    };
 
 
     /**
