@@ -586,7 +586,11 @@
         if (options.sort[column.key] && options.sort[column.key].apply) {
           return options.sort[column.key](aRow, bRow, asc);
         } else {
-          return asc ? (aDatum < bDatum) : (aDatum > bDatum);
+          if ( asc ) {
+            return aDatum > bDatum ? 1 : ( aDatum < bDatum ? -1 : 0 );
+          } else {
+            return aDatum < bDatum ? 1 : ( aDatum > bDatum ? -1 : 0 );
+          }
         }
       }, function (datum1, index1, datum2, index2) {
         datum1._current_index = index1;
