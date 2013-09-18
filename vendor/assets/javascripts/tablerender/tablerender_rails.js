@@ -678,7 +678,7 @@
     this.query = function(queryObject) {
 
       if ( queryObject == undefined || queryObject == null ) {
-        return return _reset_search_query();
+        return _reset_search_query();
       }
 
       _queryText = undefined;
