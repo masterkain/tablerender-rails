@@ -346,6 +346,13 @@
     }
 
 
+    function _reset_search_query() {
+      self.clearSelection();
+      _queryText = _queryObject = undefined;
+      showData( _data().get() );
+    }
+
+
     /**
      * This method returns current filtered data listed in table
      */
@@ -651,7 +658,7 @@
       _queryText = text;
 
       if (!text) {
-        return _reset_data( this.data() );
+        return _reset_search_query();
       }
 
       _queryObject = undefined;
@@ -671,7 +678,7 @@
     this.query = function(queryObject) {
 
       if ( queryObject == undefined || queryObject == null ) {
-        return _reset_data( this.data() );
+        return return _reset_search_query();
       }
 
       _queryText = undefined;
