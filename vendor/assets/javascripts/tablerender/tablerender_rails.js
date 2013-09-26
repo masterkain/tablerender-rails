@@ -495,8 +495,9 @@
       var
         indexes = _selectedIndexes,
         result = [];
-      for (var i = 0, l = indexes.length; i < l; i++)
-      result.push(currentIndexToOriginalIndex(indexes[i]));
+      for (var i = 0, l = indexes.length; i < l; i++) {
+        result.push(currentIndexToOriginalIndex(indexes[i]));
+      }
       return result;
     };
 
@@ -1287,7 +1288,7 @@
      * Returns the global index by given current index
      */
     function currentIndexToOriginalIndex(index) {
-      if (!isFiltered()) return index;
+      if ( !isFiltered() && !isQueried() ) return index;
       var datum = _currentData().get()[index];
       if (datum._original_index === undefined) return index;
       return datum._original_index;
@@ -1297,7 +1298,7 @@
      * Returns the current index by given global index
      */
     function originalIndexToCurrentIndex(index) {
-      if (!isFiltered()) return index;
+      if ( !isFiltered() && !isQueried() ) return index;
       var datum = _data().get()[index];
       if (datum._current_index === undefined) return index;
       return datum._current_index;
