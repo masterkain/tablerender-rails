@@ -659,14 +659,22 @@
       _queryText = text;
 
       if (!text) {
-        return _reset_search_query();
+        if ( isQueried() ) {
+          self.clearSelection();
+          _queryText = undefined;
+          var d = _query( _queryObject, _data().get(), true);
+          return showData( d );
+        } else {
+          return _reset_search_query();
+        }
       }
 
-      _queryObject = undefined;
+      // we can search on a queried list
+      // _queryObject = undefined;
 
       this.clearSelection();
 
-      var result = filter(text, this.data(), true);
+      var result = filter(text, _data().get(), true);
 
       showData(result.data);
 
@@ -1071,23 +1079,40 @@
 
       for (var i = 0, l = data.length; i < l; i++) {
         var found = false;
+        if (attachIndex) {
+          data[i]._original_index = i; // store original index
+        }
         for (var c = 0, lc = _columns.length; c < lc; c++) {
-          if (attachIndex) {
-            data[i]._original_index = i; // store original index
-          }
           var str = data[i][ _columns[c].key ];
           if (("" + str).toLowerCase().indexOf(query) != -1) {
-            result.indexes.push(i);
-            var currentIndex = result.data.push( data[i] );
-            if (attachIndex) {
-              data[i]._current_index = (currentIndex - 1);
-            }
             found = true;
             break;
           }
         }
-        if (!found && attachIndex) data[i]._current_index = i;
+
+        if ( found ) {
+
+          if ( isQueried() ) {
+            var r = _query( _queryObject, [data[i]], false );
+            found = r.length > 0;
+          }
+
+          if ( found ) {
+            result.indexes.push(i);
+            var currentIndex = result.data.push( data[i] );
+
+            if (attachIndex) {
+              data[i]._current_index = (currentIndex - 1);
+            }
+          }
+        }
+
+        if ( !found && attachIndex ) {
+          data[i]._current_index = i;
+        }
+
       }
+
       return result;
     }
 
@@ -1100,7 +1125,7 @@
         var datum = data[ i ];
 
         // set original_index to single datum
-        datum._original_index = i;
+        attachIndex && (datum._original_index = i);
 
         var match = 0;
 
