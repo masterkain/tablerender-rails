@@ -595,9 +595,11 @@
           return options.sort[column.key](aRow, bRow, asc);
         } else {
           if ( asc ) {
-            return aDatum > bDatum ? 1 : ( aDatum < bDatum ? -1 : 0 );
+            // return aDatum > bDatum ? 1 : ( aDatum < bDatum ? -1 : 0 );
+            return aDatum < bDatum;
           } else {
-            return aDatum < bDatum ? 1 : ( aDatum > bDatum ? -1 : 0 );
+            // return aDatum < bDatum ? 1 : ( aDatum > bDatum ? -1 : 0 );
+            return aDatum > bDatum;
           }
         }
       }, function (datum1, index1, datum2, index2) {
