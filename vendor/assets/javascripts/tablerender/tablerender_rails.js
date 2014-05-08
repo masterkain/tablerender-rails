@@ -609,6 +609,11 @@
 
       _currentData = TAFFY( _tmp_data );
 
+      if ( !isFiltered() && !isQueried() ) {
+        // data has not been queried or filtered. We should change original data
+        _data = TAFFY( _tmp_data );
+      }
+
       // empties older selected rows
       _selectedIndexes = [];
 
