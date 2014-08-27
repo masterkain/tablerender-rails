@@ -672,7 +672,10 @@
           var d = _query( _queryObject, _data().get(), true);
           return showData( d );
         } else {
-          return _reset_search_query();
+          _reset_search_query();
+          var rs = _data().get();
+          $self.trigger('searched', [rs, text]); // fire event
+          return;
         }
       }
 
@@ -694,7 +697,10 @@
     this.query = function(queryObject) {
 
       if ( queryObject == undefined || queryObject == null ) {
-        return _reset_search_query();
+        _reset_search_query();
+        var rs = _data().get();
+        $self.trigger('queried', [rs, queryObject]); // fire event
+        return;
       }
 
       _queryText = undefined;
